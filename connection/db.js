@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const db = mysql.createPool({
   host: 'localhost', // Ganti dengan host MySQL Anda
   user: 'root', // Ganti dengan user MySQL Anda
-  password: 'root', // Ganti dengan password MySQL Anda
+  password: '', // Ganti dengan password MySQL Anda
   database: 'db_watersensors', // Nama database Anda
 });
 
