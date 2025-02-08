@@ -14,47 +14,52 @@ const MqttxOptions = {
   path: '/mqtt',
 };
 
-// Koneksi ke MQTT broker
-const client = mqtt.connect(MqttxOptions.host, {
-  port: MqttxOptions.port,
-  clientId: MqttxOptions.clientId,
-  username: MqttxOptions.username,
-  password: MqttxOptions.password,
-  protocol: 'wss',
-  path: '/mqtt',
-});
+// Fungsi untuk memulai koneksi MQTT dengan integrasi Socket.IO
+const startMqttClient = (io) => {
+  const client = mqtt.connect(MqttxOptions.host, {
+    port: MqttxOptions.port,
+    clientId: MqttxOptions.clientId,
+    username: MqttxOptions.username,
+    password: MqttxOptions.password,
+    protocol: 'wss',
+    path: '/mqtt',
+  });
 
-// Event ketika koneksi berhasil
-client.on('connect', () => {
-  console.log('Connected to MQTT broker');
+  // Event ketika koneksi berhasil
+  client.on('connect', () => {
+    console.log('Connected to MQTT broker');
 
-  // Subscribe ke topik tertentu
-  client.subscribe('water/sensors', (err) => {
-    if (!err) {
-      console.log('Subscribed to water/sensors');
-    } else {
-      console.error('Failed to subscribe:', err);
+    // Subscribe ke topik tertentu
+    client.subscribe('water/sensors', (err) => {
+      if (!err) {
+        console.log('Subscribed to water/sensors');
+      } else {
+        console.error('Failed to subscribe:', err);
+      }
+    });
+  });
+
+  // Event ketika menerima pesan
+  client.on('message', (topic, message) => {
+    try {
+      const messageData = JSON.parse(message.toString());
+      currentData = {
+        topic: topic,
+        message: messageData.msg,
+        timestamp: new Date(),
+      };
+      console.log('Data received from MQTT:', currentData);
+
+      // Emit data ke semua klien yang terhubung melalui Socket.IO
+      io.emit('mqttData', currentData);
+    } catch (err) {
+      console.error('Error parsing MQTT message:', err);
     }
   });
-});
-
-// Event ketika menerima pesan
-client.on('message', (topic, message) => {
-  console.log(`Received message on ${topic}: ${message}`);
-  // Simpan data terbaru
-  let messageData = JSON.parse(message.toString());
-  currentData = {
-    topic: topic,
-    message: messageData.msg,
-    timestamp: new Date(),
-  };
-  console.log(currentData);
-});
-
-console.log(currentData);
+};
 
 // Fungsi getter untuk currentData
 const getCurrentData = () => currentData;
 
-// Export variabel currentData agar bisa diakses dari file lain
-module.exports = { getCurrentData };
+// Export fungsi untuk memulai MQTT client dan getter
+module.exports = { startMqttClient, getCurrentData };

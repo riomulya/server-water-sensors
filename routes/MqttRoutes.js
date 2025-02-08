@@ -1,21 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const { getCurrentData } = require('../Mqtt/MqttClient'); // Import fungsi getter
+const { getCurrentData } = require('../Mqtt/MqttClient'); // Import fungsi untuk mendapatkan data dari MQTT
 
-// Endpoint untuk mendapatkan data MQTT terbaru
-router.get('/getCurrentData', (req, res) => {
-  const currentData = getCurrentData();
-  if (currentData.message) {
-    res.json({
-      success: true,
-      data: currentData,
-    });
-  } else {
-    res.json({
-      success: false,
-      message: 'No data received yet from MQTT broker',
-    });
-  }
-});
+module.exports = (io) => {
+  // Endpoint untuk mendapatkan data MQTT terbaru
+  router.get('/getCurrentData', (req, res) => {
+    const currentData = getCurrentData(); // Dapatkan data dari MQTT
 
-module.exports = router;
+    if (currentData.message) {
+      // Emit data ke semua client melalui Socket.IO
+      io.emit('mqttData', currentData);
+
+      res.json({
+        success: true,
+        data: currentData,
+      });
+      console.log('Data MQTT dikirim ke client:', currentData);
+    } else {
+      res.json({
+        success: false,
+        message: 'No data received yet from MQTT broker',
+      });
+    }
+  });
+
+  return router;
+};
