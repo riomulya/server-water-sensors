@@ -4,8 +4,31 @@ const { generateRandomId, getCurrentDate } = require('../utils/utils');
 // Controller untuk data_accel_y
 const getDataAccelY = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM data_accel_y');
-    res.json({ success: true, data: rows });
+    const limit = parseInt(req.query.limit) || 100;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    // Query untuk mengambil data dengan LIMIT dan OFFSET
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_y ORDER BY tanggal DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+
+    // Query untuk menghitung total data
+    const [totalRows] = await db.query(
+      'SELECT COUNT(*) AS total FROM data_accel_y'
+    );
+
+    const totalPage = Math.ceil(totalRows[0].total / limit);
+
+    res.json({
+      success: true,
+      data: rows,
+      total: totalRows[0].total, // Total data
+      page,
+      totalPage,
+      limit,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
