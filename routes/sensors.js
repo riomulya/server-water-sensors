@@ -6,6 +6,10 @@ const sensorAccelZController = require('../controllers/accelZ.controllers');
 const sensorTurbidityController = require('../controllers/turbidity.controllers');
 const sensorPHController = require('../controllers/ph.controllers');
 const sensorTemperatureController = require('../controllers/temperature.controllers');
+const sensorCombinedController = require('../controllers/sensor.controllers');
+
+// Route untuk data_combined
+router.get('/data_combined', sensorCombinedController.getCombinedData);
 
 // Route untuk data_accel_x
 router.get('/data_accel_x', sensorAccelXController.getDataAccelX);
