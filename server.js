@@ -3,8 +3,11 @@ const http = require('http'); // Untuk membuat server HTTP
 const { Server } = require('socket.io'); // Import Socket.IO
 const { startMqttClient } = require('./Mqtt/MqttClient'); // Import MQTT client
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 const app = express();
+
+app.use(bodyParser.json());
 app.use(cors());
 
 const server = http.createServer(app); // Integrasi Express dengan server HTTP

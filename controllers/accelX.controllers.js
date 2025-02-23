@@ -34,6 +34,46 @@ const getDataAccelX = async (req, res) => {
   }
 };
 
+const getDataAccelXByIdLokasi = async (req, res) => {
+  try {
+    const { id_lokasi } = req.query;
+    if (!id_lokasi) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'id_lokasi parameter is required' });
+    }
+
+    const limit = parseInt(req.query.limit) || 100;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    // Query dengan filter id_lokasi
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_x WHERE id_lokasi = ? ORDER BY tanggal DESC LIMIT ? OFFSET ?',
+      [id_lokasi, limit, offset]
+    );
+
+    // Hitung total data per lokasi
+    const [totalRows] = await db.query(
+      'SELECT COUNT(*) AS total FROM data_accel_x WHERE id_lokasi = ?',
+      [id_lokasi]
+    );
+
+    const totalPage = Math.ceil(totalRows[0].total / limit);
+
+    res.json({
+      success: true,
+      data: rows,
+      total: totalRows[0].total,
+      page,
+      totalPage,
+      limit,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 const createDataAccelX = async (req, res) => {
   const { id_lokasi, nilai_accel_x, lat, lon } = req.body;
   const id_accel_x = `id_accel_x_${generateRandomId()}`; // Format ID sesuai dengan sensor
@@ -91,6 +131,7 @@ const deleteDataAccelX = async (req, res) => {
 
 module.exports = {
   getDataAccelX,
+  getDataAccelXByIdLokasi,
   createDataAccelX,
   updateDataAccelX,
   deleteDataAccelX,

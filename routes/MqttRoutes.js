@@ -13,12 +13,20 @@ module.exports = (io) => {
 
       res.json({
         success: true,
+        id_lokasi:null,
+        lat:null,
+        lon:null,
+        isStart:false,
         data: currentData,
       });
       console.log('Data MQTT dikirim ke client:', currentData);
     } else {
       res.json({
         success: false,
+        id_lokasi:null,
+        lat:null,
+        lon:null,
+        isStart:false,
         message: 'No data received yet from MQTT broker',
       });
     }

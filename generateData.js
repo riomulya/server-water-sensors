@@ -39,5 +39,5 @@ client.on('connect', () => {
     // Kirim data ke topik 'sensor/data'
     client.publish('water/sensors', JSON.stringify(data));
     console.log('Data sent:', JSON.stringify(data));
-  }, 1000); // Setiap 1 detik
+  }, 5000); // Setiap 1 detik
 });

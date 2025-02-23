@@ -7,12 +7,17 @@ const sensorTurbidityController = require('../controllers/turbidity.controllers'
 const sensorPHController = require('../controllers/ph.controllers');
 const sensorTemperatureController = require('../controllers/temperature.controllers');
 const sensorCombinedController = require('../controllers/sensor.controllers');
+const sensorLocationConroller = require('../controllers/location.controllers');
 
 // Route untuk data_combined
 router.get('/data_combined', sensorCombinedController.getCombinedData);
 
 // Route untuk data_accel_x
 router.get('/data_accel_x', sensorAccelXController.getDataAccelX);
+router.get(
+  '/data_accel_x/lokasi',
+  sensorAccelXController.getDataAccelXByIdLokasi
+);
 router.post('/data_accel_x', sensorAccelXController.createDataAccelX);
 router.put('/data_accel_x/:id', sensorAccelXController.updateDataAccelX);
 router.delete('/data_accel_x/:id', sensorAccelXController.deleteDataAccelX);
@@ -61,5 +66,12 @@ router.delete(
   '/data_temperature/:id',
   sensorTemperatureController.deleteDataTemperature
 );
+
+// route untuk
+router.post('/data_lokasi', sensorLocationConroller.createLocation);
+router.get('/data_lokasi', sensorLocationConroller.getLocations);
+router.get('/data_lokasi/:id', sensorLocationConroller.getLocationById);
+router.put('/data_lokasi/:id', sensorLocationConroller.updateLocation);
+router.delete('/data_lokasi/:id', sensorLocationConroller.deleteLocation);
 
 module.exports = router;
