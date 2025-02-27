@@ -18,8 +18,7 @@ const createLocation = async (req, res) => {
       [id_lokasi, nama_sungai, alamat, lat, lon, new Date()]
     );
 
-    // Return result untuk dipakai di server.js
-    return {
+    const newLocation = {
       id_lokasi,
       nama_sungai,
       alamat,
@@ -27,6 +26,13 @@ const createLocation = async (req, res) => {
       lon: lon.toString(),
       tanggal: new Date().toISOString(),
     };
+
+    // Emit event Socket.io ke semua client
+    if (req.io) {
+      req.io.emit('new-location', newLocation);
+    }
+
+    res.status(201).json(newLocation);
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({
@@ -66,15 +72,31 @@ const getLocationById = async (req, res) => {
 // Update Location
 const updateLocation = async (req, res) => {
   try {
-    const { nama_lokasi, koordinat, alamat, keterangan } = req.body;
+    const { nama_sungai, alamat, lat, lon } = req.body;
     const [result] = await db.query(
-      'UPDATE data_lokasi SET nama_lokasi = ?, koordinat = ?, alamat = ?, keterangan = ? WHERE id = ?',
-      [nama_lokasi, koordinat, alamat, keterangan, req.params.id]
+      'UPDATE data_lokasi SET nama_sungai = ?, alamat = ?, lat = ?, lon = ? WHERE id_lokasi = ?',
+      [nama_sungai, alamat, lat, lon, req.params.id]
     );
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Location not found' });
     }
-    res.json({ id: req.params.id, ...req.body });
+
+    const updatedLocation = {
+      id_lokasi: req.params.id,
+      nama_sungai,
+      alamat,
+      lat,
+      lon,
+      tanggal: new Date().toISOString(),
+    };
+
+    // Broadcast update ke client
+    if (req.io) {
+      req.io.emit('update-location', updatedLocation);
+    }
+
+    res.json(updatedLocation);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -83,12 +105,20 @@ const updateLocation = async (req, res) => {
 // Delete Location
 const deleteLocation = async (req, res) => {
   try {
-    const [result] = await db.query('DELETE FROM data_lokasi WHERE id = ?', [
-      req.params.id,
-    ]);
+    const [result] = await db.query(
+      'DELETE FROM data_lokasi WHERE id_lokasi = ?',
+      [req.params.id]
+    );
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Location not found' });
     }
+
+    // Broadcast deletion ke client
+    if (req.io) {
+      req.io.emit('delete-location', { id_lokasi: req.params.id });
+    }
+
     res.json({ message: 'Location deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -8,11 +8,11 @@ const getCombinedData = async (req, res) => {
         base.lon,
         base.tanggal,
         AVG(base.nilai_accel_x) AS nilai_accel_x,
-        ay.nilai_accel_y,
-        az.nilai_accel_z,
-        CAST(ph.nilai_ph AS UNSIGNED) AS nilai_ph,
-        CAST(temp.nilai_temperature AS UNSIGNED) AS nilai_temperature,
-        CAST(turb.nilai_turbidity AS UNSIGNED) AS nilai_turbidity
+        AVG(ay.nilai_accel_y) AS nilai_accel_y,
+        AVG(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(ph.nilai_ph) AS nilai_ph,
+        MAX(temp.nilai_temperature) AS nilai_temperature,
+        AVG(turb.nilai_turbidity) AS nilai_turbidity
       FROM data_accel_x AS base
       LEFT JOIN (
         SELECT lat, lon, AVG(nilai_accel_y) AS nilai_accel_y 
@@ -25,15 +25,19 @@ const getCombinedData = async (req, res) => {
         GROUP BY lat, lon
       ) AS az USING (lat, lon)
       LEFT JOIN (
-        SELECT lat, lon, AVG(nilai_ph) AS nilai_ph 
+        SELECT lat, lon, nilai_ph 
         FROM data_ph 
-        GROUP BY lat, lon
+        WHERE (lat, lon, tanggal) IN (
+          SELECT lat, lon, MAX(tanggal)
+          FROM data_ph
+          GROUP BY lat, lon
+        )
       ) AS ph USING (lat, lon)
       LEFT JOIN (
-        SELECT lat, lon, AVG(nilai_temperature) AS nilai_temperature 
+        SELECT lat, lon, MAX(nilai_temperature) AS nilai_temperature 
         FROM data_temperature 
         GROUP BY lat, lon
-      ) AS temp USING (lat, lon)
+      ) AS temp USING (lat, lon)  
       LEFT JOIN (
         SELECT lat, lon, AVG(nilai_turbidity) AS nilai_turbidity 
         FROM data_turbidity 
