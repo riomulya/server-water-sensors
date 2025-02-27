@@ -21,6 +21,13 @@ const getDataAccelY = async (req, res) => {
 
     const totalPage = Math.ceil(totalRows[0].total / limit);
 
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
     res.json({
       success: true,
       data: rows,
@@ -89,9 +96,52 @@ const deleteDataAccelY = async (req, res) => {
   }
 };
 
+const getDataAccelYByIdLokasi = async (req, res) => {
+  try {
+    const { id_lokasi } = req.params;
+    const limit = parseInt(req.query.limit) || 100;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    // Query data berdasarkan id_lokasi dengan pagination
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_y WHERE id_lokasi = ? ORDER BY tanggal DESC LIMIT ? OFFSET ?',
+      [id_lokasi, limit, offset]
+    );
+
+    // Query total data berdasarkan id_lokasi
+    const [totalRows] = await db.query(
+      'SELECT COUNT(*) AS total FROM data_accel_y WHERE id_lokasi = ?',
+      [id_lokasi]
+    );
+
+    const totalPage = Math.ceil(totalRows[0].total / limit);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan untuk lokasi ini',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows,
+      total: totalRows[0].total,
+      page,
+      totalPage,
+      limit,
+      id_lokasi,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataAccelY,
   createDataAccelY,
   updateDataAccelY,
   deleteDataAccelY,
+  getDataAccelYByIdLokasi,
 };

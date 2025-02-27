@@ -21,6 +21,13 @@ const getDataAccelX = async (req, res) => {
 
     const totalPage = Math.ceil(totalRows[0].total / limit);
 
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
     res.json({
       success: true,
       data: rows,
@@ -60,6 +67,13 @@ const getDataAccelXByIdLokasi = async (req, res) => {
     );
 
     const totalPage = Math.ceil(totalRows[0].total / limit);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan untuk lokasi ini',
+      });
+    }
 
     res.json({
       success: true,
