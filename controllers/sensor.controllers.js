@@ -46,6 +46,7 @@ const getCombinedData = async (req, res) => {
       GROUP BY base.lat, base.lon, base.tanggal
     `);
 
+    // Jika perlu realtime lebih responsif, tambahkan cache
     res.json({
       success: true,
       data: rows,

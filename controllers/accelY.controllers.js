@@ -7,19 +7,38 @@ const getDataAccelY = async (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
+    const range = req.query.range;
 
-    // Query untuk mengambil data dengan LIMIT dan OFFSET
-    const [rows] = await db.query(
-      'SELECT * FROM data_accel_y ORDER BY tanggal DESC LIMIT ? OFFSET ?',
-      [limit, offset]
-    );
+    // Validasi parameter range
+    const validRanges = { '1d': 1, '7d': 7, '30d': 30 };
+    if (range && !validRanges.hasOwnProperty(range)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid range parameter. Valid values: 1d, 7d, 30d',
+      });
+    }
 
-    // Query untuk menghitung total data
-    const [totalRows] = await db.query(
-      'SELECT COUNT(*) AS total FROM data_accel_y'
-    );
+    // Query dasar
+    let baseQuery = 'SELECT * FROM data_accel_y';
+    let countQuery = 'SELECT COUNT(*) AS total FROM data_accel_y';
+    const queryParams = [];
+    const countParams = [];
 
-    const totalPage = Math.ceil(totalRows[0].total / limit);
+    // Tambahkan filter tanggal jika ada range
+    if (range) {
+      const days = validRanges[range];
+      baseQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
+      countQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
+      queryParams.push(days);
+      countParams.push(days);
+    }
+
+    // Tambahkan sorting dan pagination
+    baseQuery += ' ORDER BY tanggal DESC LIMIT ? OFFSET ?';
+    queryParams.push(limit, offset);
+
+    const [rows] = await db.query(baseQuery, queryParams);
+    const [totalRows] = await db.query(countQuery, countParams);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -31,9 +50,9 @@ const getDataAccelY = async (req, res) => {
     res.json({
       success: true,
       data: rows,
-      total: totalRows[0].total, // Total data
+      total: totalRows[0].total,
       page,
-      totalPage,
+      totalPage: Math.ceil(totalRows[0].total / limit),
       limit,
     });
   } catch (err) {
@@ -51,6 +70,15 @@ const createDataAccelY = async (req, res) => {
       'INSERT INTO data_accel_y (id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
       [id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal]
     );
+
+    if (req.io) {
+      req.io.emit('sensor-data-changed', {
+        type: 'accelY',
+        action: 'create',
+        data: result,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Data inserted successfully',
@@ -69,6 +97,15 @@ const updateDataAccelY = async (req, res) => {
       'UPDATE data_accel_y SET id_lokasi = ?, nilai_accel_y = ?, lat = ?, lon = ? WHERE id_accel_y = ?',
       [id_lokasi, nilai_accel_y, lat, lon, id_accel_y]
     );
+
+    if (req.io) {
+      req.io.emit('sensor-data-changed', {
+        type: 'accelY',
+        action: 'update',
+        data: result,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Data updated successfully',
@@ -86,6 +123,15 @@ const deleteDataAccelY = async (req, res) => {
       'DELETE FROM data_accel_y WHERE id_accel_y = ?',
       [id_accel_y]
     );
+
+    if (req.io) {
+      req.io.emit('sensor-data-changed', {
+        type: 'accelY',
+        action: 'delete',
+        data: result,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Data deleted successfully',

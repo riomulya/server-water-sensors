@@ -18,6 +18,7 @@ router.get(
   '/data_accel_x/:id_lokasi',
   sensorAccelXController.getDataAccelXByIdLokasi
 );
+// http://localhost:3000/data_accel_x/2678652?id_lokasi=2678652&range=30d
 router.post('/data_accel_x', sensorAccelXController.createDataAccelX);
 router.put('/data_accel_x/:id', sensorAccelXController.updateDataAccelX);
 router.delete('/data_accel_x/:id', sensorAccelXController.deleteDataAccelX);

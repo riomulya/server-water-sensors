@@ -27,12 +27,14 @@ client.on('connect', () => {
   setInterval(() => {
     const data = {
       msg: {
-        accel_x: Math.floor(Math.random() * 5), // Random antara 0-20
-        accel_y: Math.floor(Math.random() * 5), // Random antara 0-20
-        accel_z: Math.floor(Math.random() * 5), // Random antara 0-20
-        ph: (Math.random() * 9).toFixed(2), // Random antara 0-14
-        turbidity: Math.floor(Math.random() * 52), // Random antara 0-100
-        temperature: Math.floor(Math.random() * 40), // Random antara 0-1000
+        latitude: (-6.3606653 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
+        longitude: (106.7330876 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
+        accel_x: Math.floor(Math.random() * 2), // Random antara 0-2 (pergerakan kecil)
+        accel_y: Math.floor(Math.random() * 2), // Random antara 0-2
+        accel_z: Math.floor(Math.random() * 2), // Random antara 0-2
+        ph: (6.5 + Math.random() * 1).toFixed(2), // pH 6.5-7.5 (lebih realistis untuk air)
+        turbidity: 20 + Math.floor(Math.random() * 20), // Kekeruhan 20-40 NTU
+        temperature: 25 + Math.floor(Math.random() * 10), // Suhu 25-35°C
       },
     };
 
