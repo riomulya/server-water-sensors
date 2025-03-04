@@ -14,6 +14,7 @@ const db = mysql.createPool({
   user: 'watersensors_tinysport', // Ganti dengan user MySQL Anda
   password: '6eeb9bfec80a161e71774d1ec2665527da29121b', // Ganti dengan password MySQL Anda
   database: 'watersensors_tinysport', // Nama database Anda
+  port: 3307,
 });
 
 // Cek koneksi
