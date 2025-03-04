@@ -54,6 +54,10 @@ io.on('connection', (socket) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.send('Welcome to the server water sensors');
+});
+
 // Jalankan server
 const PORT = 3000;
 server.listen(PORT, () => {
