@@ -27,8 +27,8 @@ client.on('connect', () => {
   setInterval(() => {
     const data = {
       msg: {
-        latitude: (-6.3606653 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
-        longitude: (106.7330876 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
+        latitude: (-6.3550728 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
+        longitude: (106.6645121 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
         accel_x: Math.floor(Math.random() * 2), // Random antara 0-2 (pergerakan kecil)
         accel_y: Math.floor(Math.random() * 2), // Random antara 0-2
         accel_z: Math.floor(Math.random() * 2), // Random antara 0-2

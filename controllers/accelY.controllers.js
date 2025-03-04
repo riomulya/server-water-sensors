@@ -1,6 +1,18 @@
 const db = require('../connection/db'); // Import koneksi database
 const { generateRandomId, getCurrentDate } = require('../utils/utils');
 
+// Fungsi reusable dengan transaction support
+const createAccelYEntry = async (data, connection) => {
+  const { id_lokasi, nilai_accel_y, lat, lon, tanggal } = data;
+  const id_accel_y = `id_accel_y_${generateRandomId()}`;
+  // const tanggal = getCurrentDate();
+
+  return connection.query(
+    'INSERT INTO data_accel_y (id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
+    [id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal]
+  );
+};
+
 // Controller untuk data_accel_y
 const getDataAccelY = async (req, res) => {
   try {
@@ -61,15 +73,13 @@ const getDataAccelY = async (req, res) => {
 };
 
 const createDataAccelY = async (req, res) => {
-  const { id_lokasi, nilai_accel_y, lat, lon } = req.body;
-  const id_accel_y = `id_accel_y_${generateRandomId()}`; // Format ID sesuai dengan sensor
-  const tanggal = getCurrentDate(); // Mendapatkan tanggal saat ini
-
+  const connection = await db.getConnection();
   try {
-    const result = await db.query(
-      'INSERT INTO data_accel_y (id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
-      [id_accel_y, id_lokasi, nilai_accel_y, lat, lon, tanggal]
-    );
+    await connection.beginTransaction();
+
+    const result = await createAccelYEntry(req.body, connection);
+
+    await connection.commit();
 
     if (req.io) {
       req.io.emit('sensor-data-changed', {
@@ -85,7 +95,10 @@ const createDataAccelY = async (req, res) => {
       data: result,
     });
   } catch (err) {
+    await connection.rollback();
     res.status(500).json({ success: false, message: err.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -187,6 +200,7 @@ const getDataAccelYByIdLokasi = async (req, res) => {
 module.exports = {
   getDataAccelY,
   createDataAccelY,
+  createAccelYEntry,
   updateDataAccelY,
   deleteDataAccelY,
   getDataAccelYByIdLokasi,

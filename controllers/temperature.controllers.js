@@ -60,16 +60,27 @@ const getDataTemperature = async (req, res) => {
   }
 };
 
-const createDataTemperature = async (req, res) => {
-  const { id_lokasi, nilai_temperature, lat, lon } = req.body;
-  const id_temperature = `id_temperature_${generateRandomId()}`; // Format ID sesuai dengan sensor
-  const tanggal = getCurrentDate(); // Mendapatkan tanggal saat ini
+// Fungsi reusable dengan transaction support
+const createTemperatureEntry = async (data, connection) => {
+  const { id_lokasi, nilai_temperature, lat, lon, tanggal } = data;
+  const id_temperature = `id_temperature_${generateRandomId()}`;
+  // const tanggal = getCurrentDate();
 
+  return connection.query(
+    'INSERT INTO data_temperature (id_temperature, id_lokasi, nilai_temperature, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
+    [id_temperature, id_lokasi, nilai_temperature, lat, lon, tanggal]
+  );
+};
+
+// Controller create dengan transaction
+const createDataTemperature = async (req, res) => {
+  const connection = await db.getConnection();
   try {
-    const result = await db.query(
-      'INSERT INTO data_temperature (id_temperature, id_lokasi, nilai_temperature, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
-      [id_temperature, id_lokasi, nilai_temperature, lat, lon, tanggal]
-    );
+    await connection.beginTransaction();
+
+    const result = await createTemperatureEntry(req.body, connection);
+
+    await connection.commit();
 
     if (req.io) {
       req.io.emit('sensor-data-changed', {
@@ -85,7 +96,10 @@ const createDataTemperature = async (req, res) => {
       data: result,
     });
   } catch (err) {
+    await connection.rollback();
     res.status(500).json({ success: false, message: err.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -188,6 +202,7 @@ const getDataTemperatureByIdLokasi = async (req, res) => {
 module.exports = {
   getDataTemperature,
   createDataTemperature,
+  createTemperatureEntry,
   updateDataTemperature,
   deleteDataTemperature,
   getDataTemperatureByIdLokasi,

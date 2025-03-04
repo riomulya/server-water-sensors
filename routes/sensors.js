@@ -11,6 +11,20 @@ const sensorLocationConroller = require('../controllers/location.controllers');
 
 // Route untuk data_combined
 router.get('/data_combined', sensorCombinedController.getCombinedData);
+router.get(
+  '/data_combined/:id_lokasi',
+  sensorCombinedController.getCombinedDataById
+);
+router.get(
+  '/data_combined/export/:id_lokasi',
+  sensorCombinedController.exportDataToExcel
+);
+
+// Route untuk data_combined dengan pagination
+router.get(
+  '/data_combined/paginated/:id_lokasi',
+  sensorCombinedController.getCombinedDataWithPagination
+);
 
 // Route untuk data_accel_x
 router.get('/data_accel_x', sensorAccelXController.getDataAccelX);

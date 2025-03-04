@@ -1,6 +1,18 @@
 const db = require('../connection/db'); // Import koneksi database
 const { generateRandomId, getCurrentDate } = require('../utils/utils');
 
+// Fungsi reusable untuk create data
+const createAccelXEntry = async (data) => {
+  const { id_lokasi, nilai_accel_x, lat, lon, tanggal } = data;
+  const id_accel_x = `id_accel_x_${generateRandomId()}`;
+  // const tanggal = getCurrentDate();
+
+  return await db.query(
+    'INSERT INTO data_accel_x (id_accel_x, id_lokasi, nilai_accel_x, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
+    [id_accel_x, id_lokasi, nilai_accel_x, lat, lon, tanggal]
+  );
+};
+
 // Controller untuk data_accel_x
 const getDataAccelX = async (req, res) => {
   try {
@@ -132,16 +144,8 @@ const getDataAccelXByIdLokasi = async (req, res) => {
 };
 
 const createDataAccelX = async (req, res) => {
-  const { id_lokasi, nilai_accel_x, lat, lon } = req.body;
-  const id_accel_x = `id_accel_x_${generateRandomId()}`; // Format ID sesuai dengan sensor
-  const tanggal = getCurrentDate(); // Mendapatkan tanggal saat ini
-
   try {
-    const result = await db.query(
-      'INSERT INTO data_accel_x (id_accel_x, id_lokasi, nilai_accel_x, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
-      [id_accel_x, id_lokasi, nilai_accel_x, lat, lon, tanggal]
-    );
-
+    const result = await createAccelXEntry(req.body);
     // Emit event ke semua client
     if (req.io) {
       req.io.emit('sensor-data-changed', {
@@ -218,6 +222,7 @@ module.exports = {
   getDataAccelX,
   getDataAccelXByIdLokasi,
   createDataAccelX,
+  createAccelXEntry,
   updateDataAccelX,
   deleteDataAccelX,
 };

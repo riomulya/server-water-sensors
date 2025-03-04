@@ -60,16 +60,27 @@ const getDataAccelZ = async (req, res) => {
   }
 };
 
-const createDataAccelZ = async (req, res) => {
-  const { id_lokasi, nilai_accel_z, lat, lon } = req.body;
-  const id_accel_z = `id_accel_z_${generateRandomId()}`; // Format ID sesuai dengan sensor
-  const tanggal = getCurrentDate(); // Mendapatkan tanggal saat ini
+// Fungsi reusable dengan transaction support
+const createAccelZEntry = async (data, connection) => {
+  const { id_lokasi, nilai_accel_z, lat, lon, tanggal } = data;
+  const id_accel_z = `id_accel_z_${generateRandomId()}`;
+  // const tanggal = getCurrentDate();
 
+  return connection.query(
+    'INSERT INTO data_accel_z (id_accel_z, id_lokasi, nilai_accel_z, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
+    [id_accel_z, id_lokasi, nilai_accel_z, lat, lon, tanggal]
+  );
+};
+
+// Controller create dengan transaction
+const createDataAccelZ = async (req, res) => {
+  const connection = await db.getConnection();
   try {
-    const result = await db.query(
-      'INSERT INTO data_accel_z (id_accel_z, id_lokasi, nilai_accel_z, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',
-      [id_accel_z, id_lokasi, nilai_accel_z, lat, lon, tanggal]
-    );
+    await connection.beginTransaction();
+
+    const result = await createAccelZEntry(req.body, connection);
+
+    await connection.commit();
 
     if (req.io) {
       req.io.emit('sensor-data-changed', {
@@ -85,7 +96,10 @@ const createDataAccelZ = async (req, res) => {
       data: result,
     });
   } catch (err) {
+    await connection.rollback();
     res.status(500).json({ success: false, message: err.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -187,6 +201,7 @@ const getDataAccelZByIdLokasi = async (req, res) => {
 module.exports = {
   getDataAccelZ,
   createDataAccelZ,
+  createAccelZEntry,
   updateDataAccelZ,
   deleteDataAccelZ,
   getDataAccelZByIdLokasi,
