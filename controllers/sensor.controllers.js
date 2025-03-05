@@ -10,20 +10,21 @@ const getCombinedData = async (req, res) => {
         base.lat,
         base.lon,
         base.tanggal,
-        AVG(base.nilai_accel_x) AS nilai_accel_x,
-        AVG(ay.nilai_accel_y) AS nilai_accel_y,
-        AVG(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(base.nilai_accel_x) AS nilai_accel_x,
+        MAX(ay.nilai_accel_y) AS nilai_accel_y,
+        MAX(az.nilai_accel_z) AS nilai_accel_z,
         MAX(ph.nilai_ph) AS nilai_ph,
         MAX(temp.nilai_temperature) AS nilai_temperature,
-        AVG(turb.nilai_turbidity) AS nilai_turbidity
+        MAX(turb.nilai_turbidity) AS nilai_turbidity,
+        MAX(speed.nilai_speed) AS nilai_speed
       FROM data_accel_x AS base
       LEFT JOIN (
-        SELECT lat, lon, AVG(nilai_accel_y) AS nilai_accel_y 
+        SELECT lat, lon, MAX(nilai_accel_y) AS nilai_accel_y 
         FROM data_accel_y 
         GROUP BY lat, lon
       ) AS ay USING (lat, lon)
       LEFT JOIN (
-        SELECT lat, lon, AVG(nilai_accel_z) AS nilai_accel_z 
+        SELECT lat, lon, MAX(nilai_accel_z) AS nilai_accel_z 
         FROM data_accel_z 
         GROUP BY lat, lon
       ) AS az USING (lat, lon)
@@ -42,10 +43,15 @@ const getCombinedData = async (req, res) => {
         GROUP BY lat, lon
       ) AS temp USING (lat, lon)  
       LEFT JOIN (
-        SELECT lat, lon, AVG(nilai_turbidity) AS nilai_turbidity 
+        SELECT lat, lon, MAX(nilai_turbidity) AS nilai_turbidity 
         FROM data_turbidity 
         GROUP BY lat, lon
       ) AS turb USING (lat, lon)
+      LEFT JOIN (
+        SELECT lat, lon, MAX(nilai_speed) AS nilai_speed 
+        FROM data_speed 
+        GROUP BY lat, lon
+      ) AS speed USING (lat, lon)
       GROUP BY base.lat, base.lon, base.tanggal
     `);
 
@@ -70,20 +76,21 @@ const getCombinedDataById = async (req, res) => {
         base.lon,
         base.tanggal,
         base.id_lokasi,
-        AVG(base.nilai_accel_x) AS nilai_accel_x,
-        AVG(ay.nilai_accel_y) AS nilai_accel_y,
-        AVG(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(base.nilai_accel_x) AS nilai_accel_x,
+        MAX(ay.nilai_accel_y) AS nilai_accel_y,
+        MAX(az.nilai_accel_z) AS nilai_accel_z,
         MAX(ph.nilai_ph) AS nilai_ph,
         MAX(temp.nilai_temperature) AS nilai_temperature,
-        AVG(turb.nilai_turbidity) AS nilai_turbidity
+        MAX(turb.nilai_turbidity) AS nilai_turbidity,
+        MAX(speed.nilai_speed) AS nilai_speed
       FROM data_accel_x AS base
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_y) AS nilai_accel_y 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_y) AS nilai_accel_y 
         FROM data_accel_y 
         GROUP BY lat, lon, id_lokasi
       ) AS ay ON base.lat = ay.lat AND base.lon = ay.lon AND base.id_lokasi = ay.id_lokasi
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_z) AS nilai_accel_z 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_z) AS nilai_accel_z 
         FROM data_accel_z 
         GROUP BY lat, lon, id_lokasi
       ) AS az ON base.lat = az.lat AND base.lon = az.lon AND base.id_lokasi = az.id_lokasi
@@ -102,10 +109,15 @@ const getCombinedDataById = async (req, res) => {
         GROUP BY lat, lon, id_lokasi
       ) AS temp ON base.lat = temp.lat AND base.lon = temp.lon AND base.id_lokasi = temp.id_lokasi  
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_turbidity) AS nilai_turbidity 
+        SELECT lat, lon, id_lokasi, MAX(nilai_turbidity) AS nilai_turbidity 
         FROM data_turbidity 
         GROUP BY lat, lon, id_lokasi
       ) AS turb ON base.lat = turb.lat AND base.lon = turb.lon AND base.id_lokasi = turb.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_speed) AS nilai_speed 
+        FROM data_speed 
+        GROUP BY lat, lon, id_lokasi
+      ) AS speed ON base.lat = speed.lat AND base.lon = speed.lon AND base.id_lokasi = speed.id_lokasi
       WHERE base.id_lokasi = ?
       GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi
     `,
@@ -139,20 +151,21 @@ const exportDataToExcel = async (req, res) => {
         base.lon,
         base.tanggal,
         base.id_lokasi,
-        AVG(base.nilai_accel_x) AS nilai_accel_x,
-        AVG(ay.nilai_accel_y) AS nilai_accel_y,
-        AVG(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(base.nilai_accel_x) AS nilai_accel_x,
+        MAX(ay.nilai_accel_y) AS nilai_accel_y,
+        MAX(az.nilai_accel_z) AS nilai_accel_z,
         MAX(ph.nilai_ph) AS nilai_ph,
         MAX(temp.nilai_temperature) AS nilai_temperature,
-        AVG(turb.nilai_turbidity) AS nilai_turbidity
+        MAX(turb.nilai_turbidity) AS nilai_turbidity,
+        MAX(speed.nilai_speed) AS nilai_speed
       FROM data_accel_x AS base
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_y) AS nilai_accel_y 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_y) AS nilai_accel_y 
         FROM data_accel_y 
         GROUP BY lat, lon, id_lokasi
       ) AS ay ON base.lat = ay.lat AND base.lon = ay.lon AND base.id_lokasi = ay.id_lokasi
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_z) AS nilai_accel_z 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_z) AS nilai_accel_z 
         FROM data_accel_z 
         GROUP BY lat, lon, id_lokasi
       ) AS az ON base.lat = az.lat AND base.lon = az.lon AND base.id_lokasi = az.id_lokasi
@@ -171,10 +184,15 @@ const exportDataToExcel = async (req, res) => {
         GROUP BY lat, lon, id_lokasi
       ) AS temp ON base.lat = temp.lat AND base.lon = temp.lon AND base.id_lokasi = temp.id_lokasi  
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_turbidity) AS nilai_turbidity 
+        SELECT lat, lon, id_lokasi, MAX(nilai_turbidity) AS nilai_turbidity 
         FROM data_turbidity 
         GROUP BY lat, lon, id_lokasi
       ) AS turb ON base.lat = turb.lat AND base.lon = turb.lon AND base.id_lokasi = turb.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_speed) AS nilai_speed 
+        FROM data_speed 
+        GROUP BY lat, lon, id_lokasi
+      ) AS speed ON base.lat = speed.lat AND base.lon = speed.lon AND base.id_lokasi = speed.id_lokasi
       WHERE base.id_lokasi = ?
       GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi`,
       [id_lokasi]
@@ -204,6 +222,7 @@ const exportDataToExcel = async (req, res) => {
       { header: 'pH', key: 'nilai_ph', width: 15 },
       { header: 'Temperature', key: 'nilai_temperature', width: 15 },
       { header: 'Turbidity', key: 'nilai_turbidity', width: 15 },
+      { header: 'Speed', key: 'nilai_speed', width: 15 },
     ];
 
     // Add rows to the worksheet
@@ -219,6 +238,7 @@ const exportDataToExcel = async (req, res) => {
         nilai_ph: row.nilai_ph,
         nilai_temperature: row.nilai_temperature,
         nilai_turbidity: row.nilai_turbidity,
+        nilai_speed: row.nilai_speed,
       });
     });
 
@@ -314,20 +334,21 @@ const getCombinedDataWithPagination = async (req, res) => {
         base.lat,
         base.lon,
         base.tanggal,
-        AVG(base.nilai_accel_x) AS nilai_accel_x,
-        AVG(ay.nilai_accel_y) AS nilai_accel_y,
-        AVG(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(base.nilai_accel_x) AS nilai_accel_x,
+        MAX(ay.nilai_accel_y) AS nilai_accel_y,
+        MAX(az.nilai_accel_z) AS nilai_accel_z,
         MAX(ph.nilai_ph) AS nilai_ph,
         MAX(temp.nilai_temperature) AS nilai_temperature,
-        AVG(turb.nilai_turbidity) AS nilai_turbidity
+        MAX(turb.nilai_turbidity) AS nilai_turbidity,
+        MAX(speed.nilai_speed) AS nilai_speed
       FROM data_accel_x AS base
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_y) AS nilai_accel_y 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_y) AS nilai_accel_y 
         FROM data_accel_y 
         GROUP BY lat, lon, id_lokasi
       ) AS ay ON base.lat = ay.lat AND base.lon = ay.lon AND base.id_lokasi = ay.id_lokasi
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_accel_z) AS nilai_accel_z 
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_z) AS nilai_accel_z 
         FROM data_accel_z 
         GROUP BY lat, lon, id_lokasi
       ) AS az ON base.lat = az.lat AND base.lon = az.lon AND base.id_lokasi = az.id_lokasi
@@ -346,10 +367,15 @@ const getCombinedDataWithPagination = async (req, res) => {
         GROUP BY lat, lon, id_lokasi
       ) AS temp ON base.lat = temp.lat AND base.lon = temp.lon AND base.id_lokasi = temp.id_lokasi  
       LEFT JOIN (
-        SELECT lat, lon, id_lokasi, AVG(nilai_turbidity) AS nilai_turbidity 
+        SELECT lat, lon, id_lokasi, MAX(nilai_turbidity) AS nilai_turbidity 
         FROM data_turbidity 
         GROUP BY lat, lon, id_lokasi
       ) AS turb ON base.lat = turb.lat AND base.lon = turb.lon AND base.id_lokasi = turb.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_speed) AS nilai_speed 
+        FROM data_speed 
+        GROUP BY lat, lon, id_lokasi
+      ) AS speed ON base.lat = speed.lat AND base.lon = speed.lon AND base.id_lokasi = speed.id_lokasi
       WHERE base.id_lokasi = ?
       GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi
       LIMIT ? OFFSET ?

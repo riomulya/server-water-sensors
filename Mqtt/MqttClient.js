@@ -39,18 +39,19 @@ const startMqttClient = (io) => {
     password: MqttxOptions.password,
     protocol: 'wss',
     path: '/mqtt',
+    reconnectPeriod: 0,
   });
 
   // Event ketika koneksi berhasil
   client.on('connect', () => {
-    // console.log('Connected to MQTT broker');
+    console.log('Connected to MQTT broker');
 
     // Subscribe ke topik tertentu
     client.subscribe('water/sensors', (err) => {
       if (!err) {
-        // console.log('Subscribed to water/sensors');
+        console.log('Subscribed to water/sensors');
       } else {
-        // console.error('Failed to subscribe:', err);
+        console.error('Failed to subscribe:', err);
       }
     });
   });

@@ -8,6 +8,7 @@ const sensorPHController = require('../controllers/ph.controllers');
 const sensorTemperatureController = require('../controllers/temperature.controllers');
 const sensorCombinedController = require('../controllers/sensor.controllers');
 const sensorLocationConroller = require('../controllers/location.controllers');
+const sensorSpeedController = require('../controllers/speed.controller');
 
 // Route untuk data_combined
 router.get('/data_combined', sensorCombinedController.getCombinedData);
@@ -99,11 +100,29 @@ router.delete(
   sensorTemperatureController.deleteDataTemperature
 );
 
-// route untuk
+// route untuk lokasi
 router.post('/data_lokasi', sensorLocationConroller.createLocation);
 router.get('/data_lokasi', sensorLocationConroller.getLocations);
 router.get('/data_lokasi/:id', sensorLocationConroller.getLocationById);
 router.put('/data_lokasi/:id', sensorLocationConroller.updateLocation);
 router.delete('/data_lokasi/:id', sensorLocationConroller.deleteLocation);
+
+// route untuk speed
+router.post('/data_speed', sensorSpeedController.createDataSpeed);
+router.get('/data_speed', sensorSpeedController.getDataSpeed);
+router.get(
+  '/data_speed/:id_lokasi',
+  sensorSpeedController.getDataSpeedByIdLokasi
+);
+router.put('/data_speed/:id', sensorSpeedController.updateDataSpeed);
+router.delete('/data_speed/:id', sensorSpeedController.deleteDataSpeed);
+
+// route untuk water quality
+// router.post('/water_quality', waterQualityController.trainModel);
+// router.post(
+//   '/water_quality/predict',
+//   waterQualityController.predictWaterQuality
+// );
+// router.get('/water-quality/predict/:id_lokasi', predictWaterQuality);
 
 module.exports = router;
