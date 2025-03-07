@@ -32,8 +32,12 @@ module.exports = (io) => {
       success: true,
       data: {
         ...currentData,
-        id_lokasi: AppState.getLocation().id_lokasi, // Ambil dari AppState
+        id_lokasi: AppState.getLocation().id_lokasi,
+        nama_sungai: AppState.getLocation().nama_sungai,
+        alamat: AppState.getLocation().alamat,
         isStart: AppState.getLocation().id_lokasi !== null,
+        latitude: AppState.getLocation().latitude,
+        longitude: AppState.getLocation().longitude,
       },
     });
   });
