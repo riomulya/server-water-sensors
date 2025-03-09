@@ -81,7 +81,8 @@ const startMqttClient = (io) => {
         sensorData.accel_z !== undefined &&
         sensorData.ph !== undefined &&
         sensorData.temperature !== undefined &&
-        sensorData.turbidity !== undefined
+        sensorData.turbidity !== undefined &&
+        sensorData.speed !== undefined
       ) {
         console.log('[DEBUG] All conditions met. Attempting to save...');
 
@@ -106,6 +107,7 @@ const startMqttClient = (io) => {
             ph: sensorData.ph !== undefined,
             temperature: sensorData.temperature !== undefined,
             turbidity: sensorData.turbidity !== undefined,
+            speed: sensorData.speed !== undefined,
           },
         });
       }

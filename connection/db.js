@@ -10,10 +10,10 @@ const mysql = require('mysql2');
 
 // Hosting
 const db = mysql.createPool({
-  host: 'baczd.h.filess.io', // Ganti dengan host MySQL Anda
-  user: 'watersensors_tinysport', // Ganti dengan user MySQL Anda
-  password: '6eeb9bfec80a161e71774d1ec2665527da29121b', // Ganti dengan password MySQL Anda
-  database: 'watersensors_tinysport', // Nama database Anda
+  host: '6jm0l.h.filess.io', // Ganti dengan host MySQL Anda
+  user: 'DBWaterSensors_shotdigmet', // Ganti dengan user MySQL Anda
+  password: '4c0cf57e452c0606a822bac607af57fbea4859b1', // Ganti dengan password MySQL Anda
+  database: 'DBWaterSensors_shotdigmet', // Nama database Anda
   port: 3307,
 });
 

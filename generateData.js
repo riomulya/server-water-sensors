@@ -27,14 +27,15 @@ client.on('connect', () => {
   setInterval(() => {
     const data = {
       msg: {
-        latitude: (-6.3550728 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
-        longitude: (106.6645121 + (Math.random() * 0.001 - 0.0005)).toFixed(7), // Variasi ±0.0005 derajat (~50 meter)
-        accel_x: Math.floor(Math.random() * 2), // Random antara 0-2 (pergerakan kecil)
-        accel_y: Math.floor(Math.random() * 2), // Random antara 0-2
-        accel_z: Math.floor(Math.random() * 2), // Random antara 0-2
-        ph: (6.5 + Math.random() * 1).toFixed(2), // pH 6.5-7.5 (lebih realistis untuk air)
-        turbidity: 20 + Math.floor(Math.random() * 20), // Kekeruhan 20-40 NTU
-        temperature: 25 + Math.floor(Math.random() * 10), // Suhu 25-35°C
+        latitude: (-6.3550728 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        longitude: (106.6645121 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        accel_x: (0.1 + Math.random() * 0.4).toFixed(2),
+        accel_y: (0.1 + Math.random() * 0.4).toFixed(2),
+        accel_z: (0.1 + Math.random() * 0.4).toFixed(2),
+        ph: (6.5 + Math.random() * 1.5).toFixed(2),
+        turbidity: (5 + Math.random() * 45).toFixed(1),
+        temperature: (15 + Math.random() * 15).toFixed(1),
+        speed: (0.1 + Math.random() * 2.4).toFixed(2),
       },
     };
 

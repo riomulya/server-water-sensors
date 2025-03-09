@@ -6,6 +6,7 @@ exports.createTemperatureEntry =
   require('./temperature.controllers').createTemperatureEntry;
 exports.createTurbidityEntry =
   require('./turbidity.controllers').createTurbidityEntry;
+exports.createSpeedEntry = require('./speed.controller').createSpeedEntry;
 
 const db = require('../connection/db');
 
@@ -44,6 +45,10 @@ exports.saveSensorData = async (data) => {
       ),
       this.createTurbidityEntry(
         { ...baseData, nilai_turbidity: data.turbidity },
+        connection
+      ),
+      this.createSpeedEntry(
+        { ...baseData, nilai_speed: data.speed },
         connection
       ),
     ]);
