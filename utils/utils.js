@@ -1,10 +1,5 @@
 const crypto = require('crypto'); // Untuk generate ID acak
 
-// Fungsi untuk membuat ID acak (24 karakter atau lebih)
-function generateRandomId() {
-  return crypto.randomBytes(16).toString('hex'); // ID acak dalam format hex
-}
-
 function getCurrentDateTime() {
   const now = new Date();
   const date = now.toISOString().split('T')[0]; // Format tanggal: YYYY-MM-DD
@@ -14,6 +9,5 @@ function getCurrentDateTime() {
 }
 
 module.exports = {
-  generateRandomId,
   getCurrentDateTime,
 };

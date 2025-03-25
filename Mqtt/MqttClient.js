@@ -64,7 +64,21 @@ const startMqttClient = (io) => {
     try {
       const messageData = JSON.parse(message.toString());
       const sensorData = messageData.msg;
-      const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      // Membuat timestamp dengan format yang benar untuk MySQL
+      const now = new Date();
+      const timestamp =
+        now.getFullYear() +
+        '-' +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(now.getDate()).padStart(2, '0') +
+        ' ' +
+        String(now.getHours()).padStart(2, '0') +
+        ':' +
+        String(now.getMinutes()).padStart(2, '0') +
+        ':' +
+        String(now.getSeconds()).padStart(2, '0');
 
       console.log('[DEBUG] Raw MQTT Data:', {
         topic,

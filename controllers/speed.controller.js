@@ -1,6 +1,5 @@
 const db = require('../connection/db');
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
-
+const { ulid } = require('ulid');
 // Controller untuk data_speed
 const getDataSpeed = async (req, res) => {
   try {
@@ -63,7 +62,7 @@ const getDataSpeed = async (req, res) => {
 // Fungsi reusable dengan transaction support
 const createSpeedEntry = async (data, connection) => {
   const { id_lokasi, nilai_speed, lat, lon, tanggal } = data;
-  const id_speed = `id_speed_${generateRandomId()}`;
+  const id_speed = ulid();
 
   return connection.query(
     'INSERT INTO data_speed (id_speed, id_lokasi, nilai_speed, lat, lon, tanggal) VALUES (?, ?, ?, ?, ?, ?)',

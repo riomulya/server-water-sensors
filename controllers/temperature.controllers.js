@@ -1,5 +1,5 @@
 const db = require('../connection/db'); // Import koneksi database
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
+const { ulid } = require('ulid');
 
 // Controller untuk data_temperature
 const getDataTemperature = async (req, res) => {
@@ -63,7 +63,7 @@ const getDataTemperature = async (req, res) => {
 // Fungsi reusable dengan transaction support
 const createTemperatureEntry = async (data, connection) => {
   const { id_lokasi, nilai_temperature, lat, lon, tanggal } = data;
-  const id_temperature = `id_temperature_${generateRandomId()}`;
+  const id_temperature = ulid();
   // const tanggal = getCurrentDate();
 
   return connection.query(

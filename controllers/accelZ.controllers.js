@@ -1,5 +1,5 @@
 const db = require('../connection/db'); // Import koneksi database
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
+const { ulid } = require('ulid');
 
 // Controller untuk data_accel_z
 const getDataAccelZ = async (req, res) => {
@@ -63,7 +63,7 @@ const getDataAccelZ = async (req, res) => {
 // Fungsi reusable dengan transaction support
 const createAccelZEntry = async (data, connection) => {
   const { id_lokasi, nilai_accel_z, lat, lon, tanggal } = data;
-  const id_accel_z = `id_accel_z_${generateRandomId()}`;
+  const id_accel_z = ulid();
   // const tanggal = getCurrentDate();
 
   return connection.query(

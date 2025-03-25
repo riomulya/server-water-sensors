@@ -1,6 +1,5 @@
 const db = require('../connection/db'); // Import koneksi database
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
-
+const { ulid } = require('ulid');
 // Controller untuk data_ph
 const getDataPH = async (req, res) => {
   try {
@@ -63,7 +62,7 @@ const getDataPH = async (req, res) => {
 // Fungsi reusable dengan transaction support
 const createPHEntry = async (data, connection) => {
   const { id_lokasi, nilai_ph, lat, lon, tanggal } = data;
-  const id_ph = `id_ph_${generateRandomId()}`;
+  const id_ph = ulid();
   // const tanggal = getCurrentDate();
 
   return connection.query(

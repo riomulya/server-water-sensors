@@ -1,10 +1,10 @@
 const db = require('../connection/db'); // Import koneksi database
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
+const { ulid } = require('ulid');
 
 // Fungsi reusable untuk create data
 const createAccelXEntry = async (data) => {
   const { id_lokasi, nilai_accel_x, lat, lon, tanggal } = data;
-  const id_accel_x = `id_accel_x_${generateRandomId()}`;
+  const id_accel_x = ulid();
   // const tanggal = getCurrentDate();
 
   return await db.query(

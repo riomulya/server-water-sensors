@@ -295,7 +295,7 @@ const exportDataToExcel = async (req, res) => {
       right: { style: 'thin' },
     };
 
-    // Set the response headers for downloading the file
+    // Set headers untuk file download
     const fileName = `SensorData_${locationData.nama_sungai}_${id_lokasi}.xlsx`;
     res.setHeader(
       'Content-Type',
@@ -303,12 +303,22 @@ const exportDataToExcel = async (req, res) => {
     );
     res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
 
-    // Write to the response
+    // Mengirim file Excel sebagai response stream
     await workbook.xlsx.write(res);
+
+    // Hentikan response setelah file terkirim
     res.end();
   } catch (err) {
-    console.error('Error exporting data to Excel:', err);
-    res.status(500).json({ success: false, message: err.message });
+    // Handle error dengan response JSON
+    res.status(500).json({
+      success: false,
+      error_code: 'EXPORT_ERROR',
+      message: err.message,
+      details: {
+        affected_id: id_lokasi,
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 };
 

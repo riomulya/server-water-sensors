@@ -1,5 +1,5 @@
 const db = require('../connection/db'); // Import koneksi database
-const { generateRandomId, getCurrentDate } = require('../utils/utils');
+const { ulid } = require('ulid');
 
 // Controller untuk data_turbidity
 const getDataTurbidity = async (req, res) => {
@@ -63,7 +63,7 @@ const getDataTurbidity = async (req, res) => {
 // Fungsi reusable dengan transaction support
 const createTurbidityEntry = async (data, connection) => {
   const { id_lokasi, nilai_turbidity, lat, lon, tanggal } = data;
-  const id_turbidity = `id_turbidity_${generateRandomId()}`;
+  const id_turbidity = ulid();
   // const tanggal = getCurrentDate();
 
   return connection.query(
