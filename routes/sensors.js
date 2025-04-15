@@ -28,6 +28,10 @@ router.get(
 );
 
 // Route untuk data_accel_x
+// ? ini untuk filter range berdasarkan waktu
+// ? d untuk days, h untuk hours, m untuk months, y untuk years
+// ? contoh: http://localhost:3000/data_accel_y?range=3m
+
 router.get('/data_accel_x', sensorAccelXController.getDataAccelX);
 router.get(
   '/data_accel_x/:id_lokasi',

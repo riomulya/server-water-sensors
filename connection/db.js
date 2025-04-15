@@ -4,12 +4,21 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Konfigurasi koneksi ke database MySQL local
+// const db = mysql.createPool({
+//   host: process.env.RAILWAY_TCP_PROXY_DOMAIN, // Ganti dengan host MySQL Anda
+//   user: process.env.MYSQLUSER, // Ganti dengan user MySQL Anda
+//   password: process.env.MYSQLPASSWORD, // Ganti dengan password MySQL Anda
+//   database: process.env.MYSQL_DATABASE, // Nama database Anda
+//   port: process.env.RAILWAY_TCP_PROXY_PORT,
+// });
+
+// Local
 const db = mysql.createPool({
-  host: process.env.RAILWAY_TCP_PROXY_DOMAIN, // Ganti dengan host MySQL Anda
-  user: process.env.MYSQLUSER, // Ganti dengan user MySQL Anda
-  password: process.env.MYSQLPASSWORD, // Ganti dengan password MySQL Anda
-  database: process.env.MYSQL_DATABASE, // Nama database Anda
-  port: process.env.RAILWAY_TCP_PROXY_PORT,
+  host: 'localhost', // Ganti dengan host MySQL Anda
+  user: 'root', // Ganti dengan user MySQL Anda
+  password: '', // Ganti dengan password MySQL Anda
+  database: 'db_watersensors', // Nama database Anda
+  port: 3306,
 });
 
 // Hosting

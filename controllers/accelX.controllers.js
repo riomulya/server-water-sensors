@@ -21,13 +21,33 @@ const getDataAccelX = async (req, res) => {
     const offset = (page - 1) * limit;
     const range = req.query.range;
 
-    // Validasi parameter range
-    const validRanges = { '1d': 1, '7d': 7, '30d': 30 }; // Menggunakan objek untuk mapping
-    if (range && !validRanges.hasOwnProperty(range)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid range parameter. Valid values: 1d, 7d, 30d',
-      });
+    // Parse range parameter (e.g., "3h", "3d", "3m", "1y")
+    let interval = null;
+    let intervalUnit = null;
+
+    if (range) {
+      const regex = /^(\d+)([hdmy])$/;
+      const matches = range.match(regex);
+
+      if (!matches) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid range format. Valid examples: 3h, 7d, 2m, 1y',
+        });
+      }
+
+      interval = parseInt(matches[1]);
+      intervalUnit = matches[2];
+
+      // Map the unit to MySQL interval unit
+      const unitMap = {
+        h: 'HOUR',
+        d: 'DAY',
+        m: 'MONTH',
+        y: 'YEAR',
+      };
+
+      intervalUnit = unitMap[intervalUnit];
     }
 
     // Query dasar
@@ -37,12 +57,13 @@ const getDataAccelX = async (req, res) => {
     const countParams = [];
 
     // Tambahkan filter tanggal jika ada range
-    if (range) {
-      const days = validRanges[range]; // Ambil nilai dari mapping
-      baseQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      countQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      queryParams.push(days);
-      countParams.push(days);
+    if (range && interval && intervalUnit) {
+      baseQuery +=
+        ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      countQuery +=
+        ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      queryParams.push(interval);
+      countParams.push(interval);
     }
 
     // Tambahkan sorting dan pagination
@@ -86,12 +107,33 @@ const getDataAccelXByIdLokasi = async (req, res) => {
       });
     }
 
-    const validRanges = ['1d', '7d', '30d'];
-    if (range && !validRanges.includes(range)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid range parameter. Valid values: 1d, 7d, 30d',
-      });
+    // Parse range parameter (e.g., "3h", "3d", "3m", "1y")
+    let interval = null;
+    let intervalUnit = null;
+
+    if (range) {
+      const regex = /^(\d+)([hdmy])$/;
+      const matches = range.match(regex);
+
+      if (!matches) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid range format. Valid examples: 3h, 7d, 2m, 1y',
+        });
+      }
+
+      interval = parseInt(matches[1]);
+      intervalUnit = matches[2];
+
+      // Map the unit to MySQL interval unit
+      const unitMap = {
+        h: 'HOUR',
+        d: 'DAY',
+        m: 'MONTH',
+        y: 'YEAR',
+      };
+
+      intervalUnit = unitMap[intervalUnit];
     }
 
     const limit = parseInt(req.query.limit) || 100;
@@ -106,12 +148,13 @@ const getDataAccelXByIdLokasi = async (req, res) => {
     const countParams = [id_lokasi];
 
     // Tambahkan filter tanggal jika ada range
-    if (range) {
-      const days = parseInt(range);
-      baseQuery += ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      countQuery += ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      queryParams.push(days);
-      countParams.push(days);
+    if (range && interval && intervalUnit) {
+      baseQuery +=
+        ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      countQuery +=
+        ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      queryParams.push(interval);
+      countParams.push(interval);
     }
 
     // Tambahkan sorting dan pagination

@@ -9,13 +9,33 @@ const getDataTurbidity = async (req, res) => {
     const offset = (page - 1) * limit;
     const range = req.query.range;
 
-    // Validasi parameter range
-    const validRanges = { '1d': 1, '7d': 7, '30d': 30 };
-    if (range && !validRanges.hasOwnProperty(range)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid range parameter. Valid values: 1d, 7d, 30d',
-      });
+    // Parse range parameter (e.g., "3h", "3d", "3m", "1y")
+    let interval = null;
+    let intervalUnit = null;
+
+    if (range) {
+      const regex = /^(\d+)([hdmy])$/;
+      const matches = range.match(regex);
+
+      if (!matches) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid range format. Valid examples: 3h, 7d, 2m, 1y',
+        });
+      }
+
+      interval = parseInt(matches[1]);
+      intervalUnit = matches[2];
+
+      // Map the unit to MySQL interval unit
+      const unitMap = {
+        h: 'HOUR',
+        d: 'DAY',
+        m: 'MONTH',
+        y: 'YEAR',
+      };
+
+      intervalUnit = unitMap[intervalUnit];
     }
 
     // Query dasar
@@ -25,12 +45,13 @@ const getDataTurbidity = async (req, res) => {
     const countParams = [];
 
     // Tambahkan filter tanggal jika ada range
-    if (range) {
-      const days = validRanges[range];
-      baseQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      countQuery += ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? DAY)';
-      queryParams.push(days);
-      countParams.push(days);
+    if (range && interval && intervalUnit) {
+      baseQuery +=
+        ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      countQuery +=
+        ' WHERE tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      queryParams.push(interval);
+      countParams.push(interval);
     }
 
     // Tambahkan sorting dan pagination
