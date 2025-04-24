@@ -22,7 +22,7 @@ const client = mqtt.connect(MqttxOptions.host, {
 
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
-
+  
   // Mengirim data setiap 5 detik
   setInterval(() => {
     const data = {

@@ -5,11 +5,22 @@ const { startMqttClient } = require('./Mqtt/MqttClient'); // Import MQTT client
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const locationController = require('./controllers/location.controllers');
+const jwt = require('jsonwebtoken');
+const db = require('./connection/db');
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+
+// Tambahkan middleware untuk handling error parsing JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('JSON parse error:', err);
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next();
+});
 
 const server = http.createServer(app); // Integrasi Express dengan server HTTP
 const io = new Server(server, {
@@ -28,10 +39,12 @@ app.use((req, res, next) => {
 // Import routes
 const mqttRoutes = require('./routes/MqttRoutes')(io); // Kirim instance io
 const sensorsRoutes = require('./routes/sensors');
+const authRoutes = require('./routes/auth');
 
 // Gunakan routes
 app.use(mqttRoutes);
 app.use(sensorsRoutes);
+app.use(authRoutes);
 
 // Setup routes dengan controller yang sudah dimodifikasi
 app.post('/locations', locationController.createLocation);
@@ -41,9 +54,77 @@ app.delete('/locations/:id', locationController.deleteLocation);
 // Integrasikan MQTT dengan Socket.IO
 startMqttClient(io);
 
+// Socket.IO authentication middleware - non-blocking untuk MQTT
+io.use((socket, next) => {
+  try {
+    // Handle guest access
+    if (socket.handshake.auth && socket.handshake.auth.token === 'guest') {
+      socket.user = { role: 'guest', organization_id: 'public' };
+      return next();
+    }
+
+    // Validasi token jika ada
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      // Tetap biarkan koneksi tanpa autentikasi untuk mqtt
+      socket.user = { role: 'unauthenticated' };
+      return next();
+    }
+
+    // Verifikasi token secara async tetapi jangan block connection
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        // Token invalid tapi tetap lanjutkan koneksi
+        socket.user = { role: 'unauthenticated' };
+        return next();
+      }
+
+      try {
+        // Cek user di database
+        const [user] = await db.execute(
+          'SELECT * FROM data_user WHERE id = ?',
+          [decoded.id]
+        );
+
+        if (user[0]) {
+          // Attach user data ke socket
+          socket.user = {
+            id: user[0].id,
+            role: user[0].role,
+            organization_id: user[0].organization_id,
+          };
+        } else {
+          socket.user = { role: 'unauthenticated' };
+        }
+      } catch (dbError) {
+        console.error('DB Error:', dbError);
+        socket.user = { role: 'unauthenticated' };
+      }
+
+      next();
+    });
+  } catch (error) {
+    console.error('Auth Error:', error.message);
+    // Tetap biarkan koneksi meskipun terjadi error
+    socket.user = { role: 'unauthenticated' };
+    next();
+  }
+});
+
 // Koneksi WebSocket
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  console.log(
+    `Client connected: ${socket.id}, Role: ${socket.user?.role || 'unknown'}`
+  );
+
+  // Join room berdasarkan organization_id jika authenticated
+  if (socket.user && socket.user.organization_id) {
+    socket.join(socket.user.organization_id);
+    console.log(`User joined room: ${socket.user.organization_id}`);
+  }
+
+  // Join public room untuk semua koneksi
+  socket.join('public');
 
   // Kirim pesan saat client terhubung
   socket.emit('message', 'Welcome to the real-time MQTT server!');

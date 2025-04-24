@@ -101,12 +101,25 @@ const startMqttClient = (io) => {
         console.log('[DEBUG] All conditions met. Attempting to save...');
 
         try {
-          await saveSensorData({
+          const savedData = await saveSensorData({
             ...currentLocation,
             ...sensorData,
             timestamp,
           });
           console.log('[DEBUG] Data saved successfully');
+
+          // Jika ada organization_id di data, kirim ke room specific
+          if (savedData && savedData.organization_id) {
+            io.to(savedData.organization_id).emit('mqttData', {
+              topic,
+              message: sensorData,
+              timestamp,
+              location: currentLocation,
+            });
+            console.log(
+              `[MQTT] Sent data to room: ${savedData.organization_id}`
+            );
+          }
         } catch (saveError) {
           console.error('[DEBUG] Save failed:', saveError);
         }
@@ -126,8 +139,15 @@ const startMqttClient = (io) => {
         });
       }
 
-      currentData = { topic, message: sensorData, timestamp };
-      io.emit('mqttData', currentData);
+      currentData = {
+        topic,
+        message: sensorData,
+        timestamp,
+        location: currentLocation,
+      };
+
+      // Kirim data ke channel public untuk semua client
+      io.to('public').emit('mqttData', currentData);
     } catch (err) {
       console.error('[MQTT] Error processing message:', err);
     }
