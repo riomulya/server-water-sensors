@@ -13,6 +13,12 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Tambahkan middleware untuk handling error parsing JSON
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -40,11 +46,13 @@ app.use((req, res, next) => {
 const mqttRoutes = require('./routes/MqttRoutes')(io); // Kirim instance io
 const sensorsRoutes = require('./routes/sensors');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 
 // Gunakan routes
 app.use(mqttRoutes);
 app.use(sensorsRoutes);
 app.use(authRoutes);
+app.use(userRoutes); // Add user management routes
 
 // Setup routes dengan controller yang sudah dimodifikasi
 app.post('/locations', locationController.createLocation);
@@ -59,7 +67,7 @@ io.use((socket, next) => {
   try {
     // Handle guest access
     if (socket.handshake.auth && socket.handshake.auth.token === 'guest') {
-      socket.user = { role: 'guest', organization_id: 'public' };
+      socket.user = { role: 'guest' };
       return next();
     }
 
@@ -91,7 +99,6 @@ io.use((socket, next) => {
           socket.user = {
             id: user[0].id,
             role: user[0].role,
-            organization_id: user[0].organization_id,
           };
         } else {
           socket.user = { role: 'unauthenticated' };
@@ -116,12 +123,6 @@ io.on('connection', (socket) => {
   console.log(
     `Client connected: ${socket.id}, Role: ${socket.user?.role || 'unknown'}`
   );
-
-  // Join room berdasarkan organization_id jika authenticated
-  if (socket.user && socket.user.organization_id) {
-    socket.join(socket.user.organization_id);
-    console.log(`User joined room: ${socket.user.organization_id}`);
-  }
 
   // Join public room untuk semua koneksi
   socket.join('public');

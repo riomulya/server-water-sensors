@@ -1,9 +1,12 @@
+const jwt = require('jsonwebtoken');
+const db = require('../connection/db');
+
 exports.authenticate = (roles = []) => {
   return async (req, res, next) => {
     try {
       // Guest bypass
       if (req.headers.authorization === 'guest' && roles.includes('guest')) {
-        req.user = { role: 'guest', organization_id: 'public' };
+        req.user = { role: 'guest' };
         return next();
       }
 
