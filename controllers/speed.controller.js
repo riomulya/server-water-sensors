@@ -176,19 +176,63 @@ const deleteDataSpeed = async (req, res) => {
 const getDataSpeedByIdLokasi = async (req, res) => {
   try {
     const { id_lokasi } = req.params;
+    const range = req.query.range;
     const limit = parseInt(req.query.limit) || 100;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
 
-    const [rows] = await db.query(
-      'SELECT * FROM data_speed WHERE id_lokasi = ? ORDER BY tanggal DESC LIMIT ? OFFSET ?',
-      [id_lokasi, limit, offset]
-    );
+    // Parse range parameter (e.g., "3h", "3d", "3m", "1y")
+    let interval = null;
+    let intervalUnit = null;
 
-    const [totalRows] = await db.query(
-      'SELECT COUNT(*) AS total FROM data_speed WHERE id_lokasi = ?',
-      [id_lokasi]
-    );
+    if (range) {
+      const regex = /^(\d+)([hdmy])$/;
+      const matches = range.match(regex);
+
+      if (!matches) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid range format. Valid examples: 3h, 7d, 2m, 1y',
+        });
+      }
+
+      interval = parseInt(matches[1]);
+      intervalUnit = matches[2];
+
+      // Map the unit to MySQL interval unit
+      const unitMap = {
+        h: 'HOUR',
+        d: 'DAY',
+        m: 'MONTH',
+        y: 'YEAR',
+      };
+
+      intervalUnit = unitMap[intervalUnit];
+    }
+
+    // Query dasar
+    let baseQuery = 'SELECT * FROM data_speed WHERE id_lokasi = ?';
+    let countQuery =
+      'SELECT COUNT(*) AS total FROM data_speed WHERE id_lokasi = ?';
+    const queryParams = [id_lokasi];
+    const countParams = [id_lokasi];
+
+    // Tambahkan filter tanggal jika ada range
+    if (range && interval && intervalUnit) {
+      baseQuery +=
+        ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      countQuery +=
+        ' AND tanggal >= DATE_SUB(NOW(), INTERVAL ? ' + intervalUnit + ')';
+      queryParams.push(interval);
+      countParams.push(interval);
+    }
+
+    // Tambahkan sorting dan pagination
+    baseQuery += ' ORDER BY tanggal DESC LIMIT ? OFFSET ?';
+    queryParams.push(limit, offset);
+
+    const [rows] = await db.query(baseQuery, queryParams);
+    const [totalRows] = await db.query(countQuery, countParams);
 
     if (rows.length === 0) {
       return res.status(404).json({

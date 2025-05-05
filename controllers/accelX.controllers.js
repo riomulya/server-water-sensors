@@ -97,7 +97,8 @@ const getDataAccelX = async (req, res) => {
 
 const getDataAccelXByIdLokasi = async (req, res) => {
   try {
-    const { id_lokasi, range } = req.query;
+    const { id_lokasi } = req.params;
+    const { range } = req.query;
 
     // Validasi parameter
     if (!id_lokasi) {
