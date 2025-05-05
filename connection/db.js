@@ -4,22 +4,22 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // // Konfigurasi koneksi ke database MySQL local
-// const db = mysql.createPool({
-//   host: process.env.MYSQL_ADDON_HOST, // Ganti dengan host MySQL Anda
-//   user: process.env.MYSQL_ADDON_USER, // Ganti dengan user MySQL Anda
-//   password: process.env.MYSQL_ADDON_PASSWORD, // Ganti dengan password MySQL Anda
-//   database: process.env.MYSQL_ADDON_DB, // Nama database Anda
-//   port: process.env.MYSQL_ADDON_PORT,
-// });
+const db = mysql.createPool({
+  host: process.env.MYSQL_ADDON_HOST, // Ganti dengan host MySQL Anda
+  user: process.env.MYSQL_ADDON_USER, // Ganti dengan user MySQL Anda
+  password: process.env.MYSQL_ADDON_PASSWORD, // Ganti dengan password MySQL Anda
+  database: process.env.MYSQL_ADDON_DB, // Nama database Anda
+  port: process.env.MYSQL_ADDON_PORT,
+});
 
 // Local;
-const db = mysql.createPool({
-  host: '127.0.0.1', // Ganti dengan host MySQL Anda
-  user: 'root', // Ganti dengan user MySQL Anda
-  password: '', // Ganti dengan password MySQL Anda
-  database: 'db_watersensors', // Nama database Anda
-  port: 3306,
-});
+// const db = mysql.createPool({
+//   host: '127.0.0.1', // Ganti dengan host MySQL Anda
+//   user: 'root', // Ganti dengan user MySQL Anda
+//   password: '', // Ganti dengan password MySQL Anda
+//   database: 'db_watersensors', // Nama database Anda
+//   port: 3306,
+// });
 
 // Hosting
 // const db = mysql.createPool({
