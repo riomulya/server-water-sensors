@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const locationController = require('./controllers/location.controllers');
 const jwt = require('jsonwebtoken');
 const db = require('./connection/db');
+const { setIoInstance } = require('./utils/socket'); // Import socket utility
 
 const app = express();
 
@@ -35,6 +36,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST', '*'],
   },
 });
+
+// Set Socket.IO instance in utility
+setIoInstance(io);
 
 // Tambahkan middleware untuk menyertakan io di request
 app.use((req, res, next) => {

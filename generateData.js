@@ -22,13 +22,13 @@ const client = mqtt.connect(MqttxOptions.host, {
 
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
-  
+
   // Mengirim data setiap 5 detik
   setInterval(() => {
     const data = {
       msg: {
-        latitude: (-6.3550728 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
-        longitude: (106.6645121 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        latitude: (-6.3350728 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        longitude: (106.4845121 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
         accel_x: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_y: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_z: (0.1 + Math.random() * 0.4).toFixed(2),
@@ -42,5 +42,5 @@ client.on('connect', () => {
     // Kirim data ke topik 'sensor/data'
     client.publish('water/sensors', JSON.stringify(data));
     console.log('Data sent:', JSON.stringify(data));
-  }, 5000); // Setiap 5 detik
+  }, 10000); // Setiap 10 detik
 });

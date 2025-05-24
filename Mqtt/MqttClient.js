@@ -86,6 +86,16 @@ const startMqttClient = (io) => {
         timestamp,
       });
 
+      // Make sure speed is properly parsed
+      const speedValue =
+        typeof sensorData.speed === 'string'
+          ? parseFloat(sensorData.speed)
+          : typeof sensorData.speed === 'number'
+          ? sensorData.speed
+          : 0;
+
+      console.log('[DEBUG] Parsed speed value:', speedValue);
+
       if (
         currentLocation.id_lokasi &&
         currentLocation.latitude &&
@@ -96,17 +106,41 @@ const startMqttClient = (io) => {
         sensorData.ph !== undefined &&
         sensorData.temperature !== undefined &&
         sensorData.turbidity !== undefined &&
-        sensorData.speed !== undefined
+        speedValue !== undefined
       ) {
         console.log('[DEBUG] All conditions met. Attempting to save...');
 
         try {
-          await saveSensorData({
+          const dataToSave = {
             ...currentLocation,
             ...sensorData,
+            speed: speedValue, // Use the properly parsed speed value
             timestamp,
-          });
-          console.log('[DEBUG] Data saved successfully');
+          };
+
+          // Save data to database
+          const success = await saveSensorData(dataToSave);
+          console.log('[DEBUG] Data saved successfully:', success);
+
+          // Emit the data directly via Socket.IO for immediate client updates
+          // This ensures clients receive updates even if the database save fails
+          const formattedData = {
+            lat: currentLocation.latitude,
+            lon: currentLocation.longitude,
+            id_lokasi: currentLocation.id_lokasi,
+            tanggal: timestamp,
+            nilai_accel_x: sensorData.accel_x,
+            nilai_accel_y: sensorData.accel_y,
+            nilai_accel_z: sensorData.accel_z,
+            nilai_ph: sensorData.ph,
+            nilai_temperature: sensorData.temperature,
+            nilai_turbidity: sensorData.turbidity,
+            nilai_speed: speedValue, // Use the properly parsed speed value
+          };
+
+          // Emit both the generic mqttData and a specific sensor-update event
+          io.emit('mqttData', currentData);
+          io.emit('sensor-update', formattedData);
         } catch (saveError) {
           console.error('[DEBUG] Save failed:', saveError);
         }
@@ -121,7 +155,7 @@ const startMqttClient = (io) => {
             ph: sensorData.ph !== undefined,
             temperature: sensorData.temperature !== undefined,
             turbidity: sensorData.turbidity !== undefined,
-            speed: sensorData.speed !== undefined,
+            speed: speedValue !== undefined,
           },
         });
       }
