@@ -51,17 +51,29 @@ const mqttRoutes = require('./routes/MqttRoutes')(io); // Kirim instance io
 const sensorsRoutes = require('./routes/sensors');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const klasifikasiRoutes = require('./routes/klasifikasi.routes');
 
 // Gunakan routes
 app.use(mqttRoutes);
 app.use(sensorsRoutes);
 app.use(authRoutes);
 app.use(userRoutes); // Add user management routes
+app.use('/klasifikasi', klasifikasiRoutes); // Add klasifikasi routes
 
 // Setup routes dengan controller yang sudah dimodifikasi
 app.post('/locations', locationController.createLocation);
 app.put('/locations/:id', locationController.updateLocation);
 app.delete('/locations/:id', locationController.deleteLocation);
+
+// Health check endpoint for preventing Render from spinning down
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('Welcome to the server water sensors');
+});
 
 // Integrasikan MQTT dengan Socket.IO
 startMqttClient(io);
@@ -140,12 +152,8 @@ io.on('connection', (socket) => {
   });
 });
 
-app.get('/', (req, res) => {
-  res.send('Welcome to the server water sensors');
-});
-
 // Jalankan server
-const PORT = 3000;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

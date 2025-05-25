@@ -6,14 +6,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "start": "nodemon index.js",
-    "generate-data": "nodemon generateData.js"
+    "start": "node index.js",
+    "generate-data": "nodemon generateData.js",
+    "keep-alive": "node keep-alive.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
+    "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
@@ -22,6 +24,7 @@
     "mqtt": "^5.10.3",
     "mysql2": "^3.11.5",
     "nodemon": "^3.1.9",
+    "react-native-svg": "^15.12.0",
     "scikitjs": "^1.24.0",
     "socket.io": "^4.8.1",
     "ulid": "^2.4.0"
