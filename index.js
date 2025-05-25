@@ -8,6 +8,7 @@ const locationController = require('./controllers/location.controllers');
 const jwt = require('jsonwebtoken');
 const db = require('./connection/db');
 const { setIoInstance } = require('./utils/socket'); // Import socket utility
+const axios = require('axios'); // Added for pinging Flask service
 
 const app = express();
 
@@ -74,6 +75,29 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.send('Welcome to the server water sensors');
 });
+
+// Function to ping Flask service to keep it awake
+const FLASK_URL = process.env.FLASK_URL || 'https://pw-brin-ml.onrender.com';
+const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+async function pingFlaskService() {
+  try {
+    console.log(
+      `[${new Date().toISOString()}] Pinging Flask service at ${FLASK_URL}...`
+    );
+    const response = await axios.get(FLASK_URL);
+    console.log(
+      `[${new Date().toISOString()}] Flask service response status: ${
+        response.status
+      }`
+    );
+  } catch (error) {
+    console.error(
+      `[${new Date().toISOString()}] Error pinging Flask service:`,
+      error.message
+    );
+  }
+}
 
 // Integrasikan MQTT dengan Socket.IO
 startMqttClient(io);
@@ -156,4 +180,9 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+
+  // Start pinging Flask service immediately and then periodically
+  console.log('Starting Flask service ping to keep it awake');
+  pingFlaskService();
+  setInterval(pingFlaskService, PING_INTERVAL);
 });
