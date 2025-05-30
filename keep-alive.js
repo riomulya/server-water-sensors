@@ -5,7 +5,7 @@ dotenv.config();
 
 // URLs for your deployed services
 const NODEJS_URL =
-  process.env.NODEJS_URL || 'https://your-nodejs-app.onrender.com';
+  process.env.NODEJS_URL || 'https://server-water-sensors.onrender.com';
 const FLASK_URL = process.env.FLASK_URL || 'https://pw-brin-ml.onrender.com';
 
 // Ping interval (in milliseconds) - 5 minutes
