@@ -262,6 +262,30 @@ const deleteDataAccelX = async (req, res) => {
   }
 };
 
+const getDataAccelXById = async (req, res) => {
+  const { id_accel_x } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_x WHERE id_accel_x = ?',
+      [id_accel_x]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataAccelX,
   getDataAccelXByIdLokasi,
@@ -269,4 +293,5 @@ module.exports = {
   createAccelXEntry,
   updateDataAccelX,
   deleteDataAccelX,
+  getDataAccelXById,
 };

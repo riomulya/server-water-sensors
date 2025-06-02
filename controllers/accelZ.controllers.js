@@ -264,6 +264,30 @@ const getDataAccelZByIdLokasi = async (req, res) => {
   }
 };
 
+const getDataAccelZById = async (req, res) => {
+  const { id_accel_z } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_z WHERE id_accel_z = ?',
+      [id_accel_z]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataAccelZ,
   createDataAccelZ,
@@ -271,4 +295,5 @@ module.exports = {
   updateDataAccelZ,
   deleteDataAccelZ,
   getDataAccelZByIdLokasi,
+  getDataAccelZById,
 };

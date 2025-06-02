@@ -115,7 +115,7 @@ io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) {
       // Tetap biarkan koneksi tanpa autentikasi untuk mqtt
-      socket.user = { role: 'unauthenticated' };
+      socket.user = { role: 'unauthenticated error token not found' };
       return next();
     }
 
@@ -123,7 +123,7 @@ io.use((socket, next) => {
     jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         // Token invalid tapi tetap lanjutkan koneksi
-        socket.user = { role: 'unauthenticated' };
+        socket.user = { role: 'unauthenticated error jwt' };
         return next();
       }
 
@@ -141,11 +141,11 @@ io.use((socket, next) => {
             role: user[0].role,
           };
         } else {
-          socket.user = { role: 'unauthenticated' };
+          socket.user = { role: 'unauthenticated error user not found' };
         }
       } catch (dbError) {
         console.error('DB Error:', dbError);
-        socket.user = { role: 'unauthenticated' };
+        socket.user = { role: 'unauthenticated error db' };
       }
 
       next();
@@ -153,7 +153,7 @@ io.use((socket, next) => {
   } catch (error) {
     console.error('Auth Error:', error.message);
     // Tetap biarkan koneksi meskipun terjadi error
-    socket.user = { role: 'unauthenticated' };
+    socket.user = { role: 'unauthenticated error' };
     next();
   }
 });

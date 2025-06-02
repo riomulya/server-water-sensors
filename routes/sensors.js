@@ -34,16 +34,23 @@ router.get(
 
 router.get('/data_accel_x', sensorAccelXController.getDataAccelX);
 router.get(
+  '/data_accel_x/id/:id_accel_x',
+  sensorAccelXController.getDataAccelXById
+);
+router.get(
   '/data_accel_x/:id_lokasi',
   sensorAccelXController.getDataAccelXByIdLokasi
 );
-// http://localhost:3000/data_accel_x/2678652?id_lokasi=2678652&range=30d
 router.post('/data_accel_x', sensorAccelXController.createDataAccelX);
 router.put('/data_accel_x/:id', sensorAccelXController.updateDataAccelX);
 router.delete('/data_accel_x/:id', sensorAccelXController.deleteDataAccelX);
 
 // Route untuk data_accel_y
 router.get('/data_accel_y', sensorAccelYController.getDataAccelY);
+router.get(
+  '/data_accel_y/id/:id_accel_y',
+  sensorAccelYController.getDataAccelYById
+);
 router.get(
   '/data_accel_y/:id_lokasi',
   sensorAccelYController.getDataAccelYByIdLokasi
@@ -55,6 +62,10 @@ router.delete('/data_accel_y/:id', sensorAccelYController.deleteDataAccelY);
 // Route untuk data_accel_z
 router.get('/data_accel_z', sensorAccelZController.getDataAccelZ);
 router.get(
+  '/data_accel_z/id/:id_accel_z',
+  sensorAccelZController.getDataAccelZById
+);
+router.get(
   '/data_accel_z/:id_lokasi',
   sensorAccelZController.getDataAccelZByIdLokasi
 );
@@ -64,6 +75,10 @@ router.delete('/data_accel_z/:id', sensorAccelZController.deleteDataAccelZ);
 
 // Route untuk data_turbidity
 router.get('/data_turbidity', sensorTurbidityController.getDataTurbidity);
+router.get(
+  '/data_turbidity/id/:id_turbidity',
+  sensorTurbidityController.getDataTurbidityById
+);
 router.get(
   '/data_turbidity/:id_lokasi',
   sensorTurbidityController.getDataTurbidityByIdLokasi
@@ -80,6 +95,7 @@ router.delete(
 
 // Route untuk data_ph
 router.get('/data_ph', sensorPHController.getDataPH);
+router.get('/data_ph/id/:id_ph', sensorPHController.getDataPHById);
 router.get('/data_ph/:id_lokasi', sensorPHController.getDataPHByIdLokasi);
 router.post('/data_ph', sensorPHController.createDataPH);
 router.put('/data_ph/:id', sensorPHController.updateDataPH);
@@ -87,6 +103,10 @@ router.delete('/data_ph/:id', sensorPHController.deleteDataPH);
 
 // Route untuk data_temperature
 router.get('/data_temperature', sensorTemperatureController.getDataTemperature);
+router.get(
+  '/data_temperature/id/:id_temperature',
+  sensorTemperatureController.getDataTemperatureById
+);
 router.get(
   '/data_temperature/:id_lokasi',
   sensorTemperatureController.getDataTemperatureByIdLokasi
@@ -112,12 +132,13 @@ router.put('/data_lokasi/:id', sensorLocationConroller.updateLocation);
 router.delete('/data_lokasi/:id', sensorLocationConroller.deleteLocation);
 
 // route untuk speed
-router.post('/data_speed', sensorSpeedController.createDataSpeed);
 router.get('/data_speed', sensorSpeedController.getDataSpeed);
+router.get('/data_speed/id/:id_speed', sensorSpeedController.getDataSpeedById);
 router.get(
   '/data_speed/:id_lokasi',
   sensorSpeedController.getDataSpeedByIdLokasi
 );
+router.post('/data_speed', sensorSpeedController.createDataSpeed);
 router.put('/data_speed/:id', sensorSpeedController.updateDataSpeed);
 router.delete('/data_speed/:id', sensorSpeedController.deleteDataSpeed);
 

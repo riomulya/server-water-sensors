@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "start": "node index.js",
+    "start": "nodemon index.js",
     "generate-data": "nodemon generateData.js",
     "keep-alive": "node keep-alive.js"
   },
@@ -19,6 +19,7 @@
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
+    "expo-device": "^7.1.4",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.10.3",

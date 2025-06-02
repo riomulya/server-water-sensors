@@ -265,6 +265,30 @@ const getDataTurbidityByIdLokasi = async (req, res) => {
   }
 };
 
+const getDataTurbidityById = async (req, res) => {
+  const { id_turbidity } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM data_turbidity WHERE id_turbidity = ?',
+      [id_turbidity]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataTurbidity,
   createDataTurbidity,
@@ -272,4 +296,5 @@ module.exports = {
   updateDataTurbidity,
   deleteDataTurbidity,
   getDataTurbidityByIdLokasi,
+  getDataTurbidityById,
 };

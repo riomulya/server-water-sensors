@@ -265,6 +265,30 @@ const getDataTemperatureByIdLokasi = async (req, res) => {
   }
 };
 
+const getDataTemperatureById = async (req, res) => {
+  const { id_temperature } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM data_temperature WHERE id_temperature = ?',
+      [id_temperature]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataTemperature,
   createDataTemperature,
@@ -272,4 +296,5 @@ module.exports = {
   updateDataTemperature,
   deleteDataTemperature,
   getDataTemperatureByIdLokasi,
+  getDataTemperatureById,
 };

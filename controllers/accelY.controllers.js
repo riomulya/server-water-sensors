@@ -263,6 +263,30 @@ const getDataAccelYByIdLokasi = async (req, res) => {
   }
 };
 
+const getDataAccelYById = async (req, res) => {
+  const { id_accel_y } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM data_accel_y WHERE id_accel_y = ?',
+      [id_accel_y]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   getDataAccelY,
   createDataAccelY,
@@ -270,4 +294,5 @@ module.exports = {
   updateDataAccelY,
   deleteDataAccelY,
   getDataAccelYByIdLokasi,
+  getDataAccelYById,
 };
