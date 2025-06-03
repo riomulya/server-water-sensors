@@ -33,7 +33,8 @@ router.get('/all', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const klasifikasi = await klasifikasiController.getKlasifikasiById(id);
+    const klasifikasi =
+      await klasifikasiController.getKlasifikasiByIdWithSensorData(id);
 
     if (!klasifikasi) {
       return res
@@ -109,16 +110,29 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;
+    console.log(`Received DELETE request for klasifikasi ID: ${id}`);
+
     const result = await klasifikasiController.deleteKlasifikasi(id);
+    console.log(`Delete operation result:`, result);
 
     if (!result.success) {
       return res.status(404).json(result);
     }
 
-    res.json(result);
+    res.json({
+      success: true,
+      message:
+        result.message ||
+        'Klasifikasi record and all associated sensor data deleted successfully',
+      affectedRows: result.affectedRows,
+    });
   } catch (err) {
     console.error(`Error deleting klasifikasi with ID ${req.params.id}:`, err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      message: `Failed to delete klasifikasi with ID ${req.params.id}`,
+    });
   }
 });
 
@@ -294,6 +308,60 @@ router.get('/speed/:id_speed', async (req, res) => {
   } catch (err) {
     console.error(
       `Error fetching klasifikasi for Speed sensor ${req.params.id_speed}:`,
+      err
+    );
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update klasifikasi with sensor data (pH, temperature, turbidity) and get new prediction
+router.put('/:id/prediction', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { ph, temperature, turbidity } = req.body;
+
+    // Validate required fields
+    if (!ph || !temperature || !turbidity) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameters: ph, temperature, turbidity',
+      });
+    }
+
+    // Validate numeric values
+    if (
+      isNaN(parseFloat(ph)) ||
+      isNaN(parseFloat(temperature)) ||
+      isNaN(parseFloat(turbidity))
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: 'All sensor values must be valid numbers',
+      });
+    }
+
+    console.log(
+      `Received request to update klasifikasi ${id} with sensor values:`,
+      { ph, temperature, turbidity }
+    );
+
+    const result = await klasifikasiController.updateKlasifikasiWithSensorData(
+      id,
+      {
+        ph: parseFloat(ph),
+        temperature: parseFloat(temperature),
+        turbidity: parseFloat(turbidity),
+      }
+    );
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error(
+      `Error updating klasifikasi prediction with ID ${req.params.id}:`,
       err
     );
     res.status(500).json({ success: false, error: err.message });

@@ -32,9 +32,9 @@ client.on('connect', () => {
         accel_x: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_y: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_z: (0.1 + Math.random() * 0.4).toFixed(2),
-        ph: (6.5 + Math.random() * 1.5).toFixed(2),
-        turbidity: (5 + Math.random() * 45).toFixed(1),
-        temperature: (15 + Math.random() * 15).toFixed(1),
+        ph: (12.5 + Math.random() * 1.5).toFixed(2),
+        turbidity: (500 + Math.random() * 45).toFixed(1),
+        temperature: (45 + Math.random() * 15).toFixed(1),
         speed: (0.1 + Math.random() * 2.4).toFixed(2),
       },
     };
