@@ -53,14 +53,16 @@ const applyExcelStyling = (worksheet) => {
         bottom: { style: 'thin', color: { argb: 'E5E8F0' } },
         right: { style: 'thin', color: { argb: 'E5E8F0' } },
       };
-      cell.alignment = { vertical: 'middle' };
+
+      // Seragamkan alignment semua sel menjadi rata tengah (kecuali untuk nilai numerik spesifik)
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
     // Memastikan tinggi baris seragam
     row.height = 20;
   }
 
-  // Format nomor untuk kolom data sensor
+  // Format khusus untuk kolom data sensor - hanya ubah format angka, alignment tetap center
   worksheet.columns.forEach((column) => {
     if (
       [
@@ -74,11 +76,6 @@ const applyExcelStyling = (worksheet) => {
       ].includes(column.key)
     ) {
       column.numFmt = '0.00';
-      column.alignment = { horizontal: 'right' };
-    }
-
-    if (['tanggal'].includes(column.key)) {
-      column.alignment = { horizontal: 'left' };
     }
   });
 };
