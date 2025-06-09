@@ -1,6 +1,170 @@
 const db = require('../connection/db'); // Import koneksi database
 const ExcelJS = require('exceljs');
 
+// Helper function untuk styling Excel agar lebih profesional
+const applyExcelStyling = (worksheet) => {
+  // Format header dengan warna dan style yang elegan
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFF' }, size: 12 };
+  headerRow.height = 25;
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  // Warna header gradient biru
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'gradient',
+      gradient: 'angle',
+      degree: 90,
+      stops: [
+        { position: 0, color: { argb: '0070C0' } },
+        { position: 1, color: { argb: '4472C4' } },
+      ],
+    };
+    cell.border = {
+      top: { style: 'thin', color: { argb: '8EA9DB' } },
+      left: { style: 'thin', color: { argb: '8EA9DB' } },
+      bottom: { style: 'thin', color: { argb: '8EA9DB' } },
+      right: { style: 'thin', color: { argb: '8EA9DB' } },
+    };
+  });
+
+  // Tambahkan filter otomatis untuk header
+  worksheet.autoFilter = worksheet.getRow(1).cellRefs;
+
+  // Freeze panes untuk membekukan header saat scrolling
+  worksheet.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
+
+  // Style untuk baris bergantian (zebra striping)
+  const totalRows = worksheet.rowCount;
+  for (let i = 2; i <= totalRows; i++) {
+    const row = worksheet.getRow(i);
+
+    // Warna latar belakang selang-seling untuk memudahkan membaca
+    const fillColor = i % 2 === 0 ? 'F2F6FC' : 'FFFFFF';
+    row.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: fillColor },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'E5E8F0' } },
+        left: { style: 'thin', color: { argb: 'E5E8F0' } },
+        bottom: { style: 'thin', color: { argb: 'E5E8F0' } },
+        right: { style: 'thin', color: { argb: 'E5E8F0' } },
+      };
+      cell.alignment = { vertical: 'middle' };
+    });
+
+    // Memastikan tinggi baris seragam
+    row.height = 20;
+  }
+
+  // Format nomor untuk kolom data sensor
+  worksheet.columns.forEach((column) => {
+    if (
+      [
+        'nilai_accel_x',
+        'nilai_accel_y',
+        'nilai_accel_z',
+        'nilai_ph',
+        'nilai_temperature',
+        'nilai_turbidity',
+        'nilai_speed',
+      ].includes(column.key)
+    ) {
+      column.numFmt = '0.00';
+      column.alignment = { horizontal: 'right' };
+    }
+
+    if (['tanggal'].includes(column.key)) {
+      column.alignment = { horizontal: 'left' };
+    }
+  });
+};
+
+// Helper function untuk menambahkan worksheet metadata
+const addMetadataWorksheet = (workbook, title, additionalInfo = {}) => {
+  const metadataSheet = workbook.addWorksheet('Informasi', {
+    properties: { tabColor: { argb: '4472C4' } },
+  });
+
+  // Logo dan header
+  metadataSheet.mergeCells('A1:F1');
+  const titleCell = metadataSheet.getCell('A1');
+  titleCell.value = title;
+  titleCell.font = { bold: true, size: 16, color: { argb: '4472C4' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  metadataSheet.getRow(1).height = 30;
+
+  // Informasi ekspor
+  metadataSheet.addRow([]);
+  metadataSheet.mergeCells('A3:B3');
+  metadataSheet.getCell('A3').value = 'Informasi Ekspor Data';
+  metadataSheet.getCell('A3').font = {
+    bold: true,
+    size: 12,
+    color: { argb: '4472C4' },
+  };
+
+  // Tambahkan timestamp ekspor
+  metadataSheet.addRow(['Tanggal & Waktu Ekspor', new Date().toLocaleString()]);
+
+  // Tambahkan informasi tambahan jika ada
+  Object.entries(additionalInfo).forEach(([key, value], index) => {
+    metadataSheet.addRow([key, value]);
+  });
+
+  // Style tabel informasi
+  for (let i = 4; i <= metadataSheet.rowCount; i++) {
+    const row = metadataSheet.getRow(i);
+
+    // Style untuk sel label
+    const labelCell = row.getCell(1);
+    labelCell.font = { bold: true };
+    labelCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'E6EFF8' },
+    };
+
+    // Style untuk sel nilai
+    const valueCell = row.getCell(2);
+    valueCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'F2F6FC' },
+    };
+
+    // Border untuk keduanya
+    [labelCell, valueCell].forEach((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'D0D7E5' } },
+        left: { style: 'thin', color: { argb: 'D0D7E5' } },
+        bottom: { style: 'thin', color: { argb: 'D0D7E5' } },
+        right: { style: 'thin', color: { argb: 'D0D7E5' } },
+      };
+      cell.alignment = { vertical: 'middle' };
+    });
+
+    row.height = 22;
+  }
+
+  // Sesuaikan lebar kolom
+  metadataSheet.getColumn('A').width = 25;
+  metadataSheet.getColumn('B').width = 40;
+
+  // Tambahkan catatan di bawah
+  metadataSheet.addRow([]);
+  metadataSheet.mergeCells(
+    `A${metadataSheet.rowCount + 1}:F${metadataSheet.rowCount + 1}`
+  );
+  const noteCell = metadataSheet.getCell(`A${metadataSheet.rowCount}`);
+  noteCell.value = 'Data diekspor dari Sistem Monitoring Kualitas Air';
+  noteCell.font = { italic: true, color: { argb: '808080' } };
+  noteCell.alignment = { horizontal: 'left' };
+};
+
 // var totalDataById = 0;
 
 const getCombinedData = async (req, res) => {
@@ -201,7 +365,7 @@ const exportDataToExcel = async (req, res) => {
 
     // Fetch location details
     const [locationRows] = await db.query(
-      `SELECT id_lokasi, nama_sungai, alamat,lat,lon FROM data_lokasi WHERE id_lokasi = ?`,
+      `SELECT id_lokasi, nama_sungai, alamat, lat, lon FROM data_lokasi WHERE id_lokasi = ?`,
       [id_lokasi]
     );
 
@@ -209,29 +373,39 @@ const exportDataToExcel = async (req, res) => {
 
     // Create a new workbook and add a worksheet
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Sensor Data');
 
-    // Define columns for sensor data
+    // Set workbook properties
+    workbook.creator = 'Sistem Monitoring Kualitas Air';
+    workbook.lastModifiedBy = 'Sistem Ekspor Otomatis';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    // Tambahkan worksheet untuk data sensor dengan warna tab
+    const worksheet = workbook.addWorksheet('Data Sensor', {
+      properties: { tabColor: { argb: '2F75B5' } },
+    });
+
+    // Define columns for sensor data with better styling
     worksheet.columns = [
       { header: 'Latitude', key: 'lat', width: 15 },
       { header: 'Longitude', key: 'lon', width: 15 },
-      { header: 'Date', key: 'tanggal', width: 20 },
-      { header: 'Location ID', key: 'id_lokasi', width: 15 },
-      { header: 'Accel X', key: 'nilai_accel_x', width: 15 },
-      { header: 'Accel Y', key: 'nilai_accel_y', width: 15 },
-      { header: 'Accel Z', key: 'nilai_accel_z', width: 15 },
-      { header: 'pH', key: 'nilai_ph', width: 15 },
-      { header: 'Temperature', key: 'nilai_temperature', width: 15 },
-      { header: 'Turbidity', key: 'nilai_turbidity', width: 15 },
-      { header: 'Speed', key: 'nilai_speed', width: 15 },
+      { header: 'Tanggal & Waktu', key: 'tanggal', width: 22 },
+      { header: 'ID Lokasi', key: 'id_lokasi', width: 10 },
+      { header: 'Akselerasi X', key: 'nilai_accel_x', width: 15 },
+      { header: 'Akselerasi Y', key: 'nilai_accel_y', width: 15 },
+      { header: 'Akselerasi Z', key: 'nilai_accel_z', width: 15 },
+      { header: 'pH', key: 'nilai_ph', width: 12 },
+      { header: 'Temperatur (°C)', key: 'nilai_temperature', width: 15 },
+      { header: 'Turbiditas (NTU)', key: 'nilai_turbidity', width: 15 },
+      { header: 'Kecepatan (m/s)', key: 'nilai_speed', width: 15 },
     ];
 
-    // Add rows to the worksheet
+    // Add rows to the worksheet with formatted date
     sensorRows.forEach((row) => {
       worksheet.addRow({
         lat: row.lat,
         lon: row.lon,
-        tanggal: new Date(row.tanggal).toLocaleString(), // Ubah format tanggal menjadi waktu yang bisa dibaca manusia
+        tanggal: new Date(row.tanggal).toLocaleString(),
         id_lokasi: row.id_lokasi,
         nilai_accel_x: row.nilai_accel_x,
         nilai_accel_y: row.nilai_accel_y,
@@ -243,31 +417,21 @@ const exportDataToExcel = async (req, res) => {
       });
     });
 
-    // Apply basic styling to the header (remove complex styles for now)
-    worksheet.getRow(1).font = { bold: true };
+    // Apply styling ke worksheet utama
+    applyExcelStyling(worksheet);
 
-    // Set border for sensor data
-    const sensorRowCount = sensorRows.length + 1; // +1 for header
-    const sensorRange =
-      worksheet.getCell(`A1`).address +
-      `:${worksheet.getCell(`K${sensorRowCount}`).address}`;
-    worksheet.getCell(sensorRange).border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-
-    // Create a new worksheet for location data
-    const locationWorksheet = workbook.addWorksheet('Location Data');
+    // Create a new worksheet for location data with better styling
+    const locationWorksheet = workbook.addWorksheet('Detail Lokasi', {
+      properties: { tabColor: { argb: '70AD47' } },
+    });
 
     // Define columns for location data
     locationWorksheet.columns = [
-      { header: 'Location ID', key: 'id_lokasi', width: 15 },
+      { header: 'ID Lokasi', key: 'id_lokasi', width: 15 },
       { header: 'Latitude', key: 'lat', width: 15 },
       { header: 'Longitude', key: 'lon', width: 15 },
-      { header: 'River Name', key: 'nama_sungai', width: 30 },
-      { header: 'Address', key: 'alamat', width: 50 },
+      { header: 'Nama Sungai', key: 'nama_sungai', width: 30 },
+      { header: 'Alamat Lengkap', key: 'alamat', width: 50 },
     ];
 
     // Add the location data row
@@ -281,28 +445,45 @@ const exportDataToExcel = async (req, res) => {
       });
     }
 
-    // Apply basic styling to the location header
-    locationWorksheet.getRow(1).font = { bold: true };
+    // Apply styling ke worksheet lokasi
+    applyExcelStyling(locationWorksheet);
 
-    // Set border for location data
-    const locationRowCount = locationData ? 2 : 1; // +1 for header
-    const locationRange =
-      locationWorksheet.getCell(`A1`).address +
-      `:${locationWorksheet.getCell(`E${locationRowCount}`).address}`;
-    locationWorksheet.getCell(locationRange).border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
+    // Tambahkan halaman informasi metadata
+    addMetadataWorksheet(
+      workbook,
+      'Data Sensor untuk ' +
+        (locationData ? locationData.nama_sungai : 'Lokasi ' + id_lokasi),
+      {
+        'ID Lokasi': id_lokasi,
+        'Nama Sungai': locationData
+          ? locationData.nama_sungai
+          : 'Tidak diketahui',
+        Alamat: locationData ? locationData.alamat : 'Tidak diketahui',
+        'Jumlah Data': sensorRows.length,
+        'Periode Data':
+          sensorRows.length > 0
+            ? `${new Date(
+                sensorRows[sensorRows.length - 1].tanggal
+              ).toLocaleDateString()} - ${new Date(
+                sensorRows[0].tanggal
+              ).toLocaleDateString()}`
+            : 'Tidak ada data',
+      }
+    );
 
-    // Set headers untuk file download
-    const fileName = `SensorData_${locationData.nama_sungai}_${id_lokasi}.xlsx`;
+    // Set headers untuk file download dengan nama file yang lebih informatif
+    const formattedDate = new Date()
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, '');
+    const fileName = `SensorData_${
+      locationData ? locationData.nama_sungai.replace(/\s+/g, '_') : id_lokasi
+    }_${formattedDate}.xlsx`;
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     // Mengirim file Excel sebagai response stream
     await workbook.xlsx.write(res);
@@ -385,32 +566,48 @@ const exportAllDataToExcel = async (req, res) => {
       `SELECT id_lokasi, nama_sungai, alamat, lat, lon FROM data_lokasi ORDER BY id_lokasi ASC`
     );
 
+    // Hitung statistik untuk metadata
+    const locationCount = locationRows.length;
+    const uniqueLocationsInData = [
+      ...new Set(sensorRows.map((row) => row.id_lokasi)),
+    ].length;
+
     // Create a new workbook and add a worksheet
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('All Sensor Data');
 
-    // Define columns for sensor data
+    // Set workbook properties
+    workbook.creator = 'Sistem Monitoring Kualitas Air';
+    workbook.lastModifiedBy = 'Sistem Ekspor Otomatis';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    // Tambahkan worksheet untuk data sensor dengan warna tab
+    const worksheet = workbook.addWorksheet('Semua Data Sensor', {
+      properties: { tabColor: { argb: '2F75B5' } },
+    });
+
+    // Define columns for sensor data with better styling
     worksheet.columns = [
       { header: 'Latitude', key: 'lat', width: 15 },
       { header: 'Longitude', key: 'lon', width: 15 },
-      { header: 'Date', key: 'tanggal', width: 20 },
-      { header: 'Location ID', key: 'id_lokasi', width: 15 },
-      { header: 'Location Name', key: 'nama_sungai', width: 25 },
-      { header: 'Accel X', key: 'nilai_accel_x', width: 15 },
-      { header: 'Accel Y', key: 'nilai_accel_y', width: 15 },
-      { header: 'Accel Z', key: 'nilai_accel_z', width: 15 },
-      { header: 'pH', key: 'nilai_ph', width: 15 },
-      { header: 'Temperature', key: 'nilai_temperature', width: 15 },
-      { header: 'Turbidity', key: 'nilai_turbidity', width: 15 },
-      { header: 'Speed', key: 'nilai_speed', width: 15 },
+      { header: 'Tanggal & Waktu', key: 'tanggal', width: 22 },
+      { header: 'ID Lokasi', key: 'id_lokasi', width: 10 },
+      { header: 'Nama Lokasi', key: 'nama_sungai', width: 25 },
+      { header: 'Akselerasi X', key: 'nilai_accel_x', width: 15 },
+      { header: 'Akselerasi Y', key: 'nilai_accel_y', width: 15 },
+      { header: 'Akselerasi Z', key: 'nilai_accel_z', width: 15 },
+      { header: 'pH', key: 'nilai_ph', width: 12 },
+      { header: 'Temperatur (°C)', key: 'nilai_temperature', width: 15 },
+      { header: 'Turbiditas (NTU)', key: 'nilai_turbidity', width: 15 },
+      { header: 'Kecepatan (m/s)', key: 'nilai_speed', width: 15 },
     ];
 
-    // Add rows to the worksheet
+    // Add rows to the worksheet with formatted date
     sensorRows.forEach((row) => {
       worksheet.addRow({
         lat: row.lat,
         lon: row.lon,
-        tanggal: new Date(row.tanggal).toLocaleString(), // Ubah format tanggal menjadi waktu yang bisa dibaca manusia
+        tanggal: new Date(row.tanggal).toLocaleString(),
         id_lokasi: row.id_lokasi,
         nama_sungai: row.nama_sungai,
         nilai_accel_x: row.nilai_accel_x,
@@ -423,31 +620,21 @@ const exportAllDataToExcel = async (req, res) => {
       });
     });
 
-    // Apply basic styling to the header
-    worksheet.getRow(1).font = { bold: true };
+    // Apply styling ke worksheet utama
+    applyExcelStyling(worksheet);
 
-    // Set border for sensor data
-    const sensorRowCount = sensorRows.length + 1; // +1 for header
-    const sensorRange =
-      worksheet.getCell(`A1`).address +
-      `:${worksheet.getCell(`L${sensorRowCount}`).address}`;
-    worksheet.getCell(sensorRange).border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-
-    // Create a summary worksheet for all locations
-    const locationsWorksheet = workbook.addWorksheet('Locations Summary');
+    // Create a summary worksheet for all locations with better styling
+    const locationsWorksheet = workbook.addWorksheet('Daftar Lokasi', {
+      properties: { tabColor: { argb: '70AD47' } },
+    });
 
     // Define columns for location data
     locationsWorksheet.columns = [
-      { header: 'Location ID', key: 'id_lokasi', width: 15 },
+      { header: 'ID Lokasi', key: 'id_lokasi', width: 15 },
       { header: 'Latitude', key: 'lat', width: 15 },
       { header: 'Longitude', key: 'lon', width: 15 },
-      { header: 'River Name', key: 'nama_sungai', width: 30 },
-      { header: 'Address', key: 'alamat', width: 50 },
+      { header: 'Nama Sungai', key: 'nama_sungai', width: 30 },
+      { header: 'Alamat Lengkap', key: 'alamat', width: 50 },
     ];
 
     // Add the location data rows
@@ -461,29 +648,73 @@ const exportAllDataToExcel = async (req, res) => {
       });
     });
 
-    // Apply basic styling to the location header
-    locationsWorksheet.getRow(1).font = { bold: true };
+    // Apply styling ke worksheet lokasi
+    applyExcelStyling(locationsWorksheet);
 
-    // Set border for location data
-    const locationRowCount = locationRows.length + 1; // +1 for header
-    const locationRange =
-      locationsWorksheet.getCell(`A1`).address +
-      `:${locationsWorksheet.getCell(`E${locationRowCount}`).address}`;
-    locationsWorksheet.getCell(locationRange).border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
+    // Tambahkan worksheet untuk ringkasan statistik
+    const statsWorksheet = workbook.addWorksheet('Statistik Data', {
+      properties: { tabColor: { argb: 'C55A11' } },
+    });
 
-    // Set headers untuk file download
-    const currentDate = new Date().toISOString().split('T')[0];
-    const fileName = `AllSensorData_${currentDate}.xlsx`;
+    // Define columns untuk statistik
+    statsWorksheet.columns = [
+      { header: 'Kategori', key: 'category', width: 25 },
+      { header: 'Nilai', key: 'value', width: 15 },
+    ];
+
+    // Tambahkan baris statistik
+    statsWorksheet.addRow({
+      category: 'Total Data Sensor',
+      value: sensorRows.length,
+    });
+    statsWorksheet.addRow({
+      category: 'Jumlah Lokasi Terdaftar',
+      value: locationCount,
+    });
+    statsWorksheet.addRow({
+      category: 'Lokasi dengan Data',
+      value: uniqueLocationsInData,
+    });
+
+    if (sensorRows.length > 0) {
+      statsWorksheet.addRow({
+        category: 'Rentang Waktu Data',
+        value: `${new Date(
+          sensorRows[sensorRows.length - 1].tanggal
+        ).toLocaleDateString()} - ${new Date(
+          sensorRows[0].tanggal
+        ).toLocaleDateString()}`,
+      });
+    }
+
+    // Apply styling untuk worksheet statistik
+    applyExcelStyling(statsWorksheet);
+
+    // Tambahkan halaman informasi metadata
+    addMetadataWorksheet(workbook, 'Kumpulan Data Sensor Semua Lokasi', {
+      'Total Data': sensorRows.length,
+      'Jumlah Lokasi': locationCount,
+      'Rentang Data':
+        sensorRows.length > 0
+          ? `${new Date(
+              sensorRows[sensorRows.length - 1].tanggal
+            ).toLocaleDateString()} - ${new Date(
+              sensorRows[0].tanggal
+            ).toLocaleDateString()}`
+          : 'Tidak ada data',
+    });
+
+    // Set headers untuk file download dengan nama file yang lebih informatif
+    const formattedDate = new Date()
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, '');
+    const fileName = `AllSensorData_${formattedDate}.xlsx`;
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     // Mengirim file Excel sebagai response stream
     await workbook.xlsx.write(res);
