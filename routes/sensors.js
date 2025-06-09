@@ -16,6 +16,14 @@ router.get(
   '/data_combined/:id_lokasi',
   sensorCombinedController.getCombinedDataById
 );
+
+// Route untuk export semua data (letakkan sebelum route dengan parameter)
+router.get(
+  '/data_combined_export/all',
+  sensorCombinedController.exportAllDataToExcel
+);
+
+// Route untuk export data berdasarkan lokasi
 router.get(
   '/data_combined/export/:id_lokasi',
   sensorCombinedController.exportDataToExcel

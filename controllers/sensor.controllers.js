@@ -194,7 +194,8 @@ const exportDataToExcel = async (req, res) => {
         GROUP BY lat, lon, id_lokasi
       ) AS speed ON base.lat = speed.lat AND base.lon = speed.lon AND base.id_lokasi = speed.id_lokasi
       WHERE base.id_lokasi = ?
-      GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi`,
+      GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi
+      ORDER BY base.tanggal DESC`,
       [id_lokasi]
     );
 
@@ -249,7 +250,7 @@ const exportDataToExcel = async (req, res) => {
     const sensorRowCount = sensorRows.length + 1; // +1 for header
     const sensorRange =
       worksheet.getCell(`A1`).address +
-      `:${worksheet.getCell(`J${sensorRowCount}`).address}`;
+      `:${worksheet.getCell(`K${sensorRowCount}`).address}`;
     worksheet.getCell(sensorRange).border = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -287,7 +288,7 @@ const exportDataToExcel = async (req, res) => {
     const locationRowCount = locationData ? 2 : 1; // +1 for header
     const locationRange =
       locationWorksheet.getCell(`A1`).address +
-      `:${locationWorksheet.getCell(`C${locationRowCount}`).address}`;
+      `:${locationWorksheet.getCell(`E${locationRowCount}`).address}`;
     locationWorksheet.getCell(locationRange).border = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -316,6 +317,186 @@ const exportDataToExcel = async (req, res) => {
       message: err.message,
       details: {
         affected_id: id_lokasi,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+};
+
+const exportAllDataToExcel = async (req, res) => {
+  try {
+    // Fetch all combined sensor data
+    const [sensorRows] = await db.query(
+      `SELECT 
+        base.lat,
+        base.lon,
+        base.tanggal,
+        base.id_lokasi,
+        MAX(base.nilai_accel_x) AS nilai_accel_x,
+        MAX(ay.nilai_accel_y) AS nilai_accel_y,
+        MAX(az.nilai_accel_z) AS nilai_accel_z,
+        MAX(ph.nilai_ph) AS nilai_ph,
+        MAX(temp.nilai_temperature) AS nilai_temperature,
+        MAX(turb.nilai_turbidity) AS nilai_turbidity,
+        MAX(speed.nilai_speed) AS nilai_speed,
+        loc.nama_sungai
+      FROM data_accel_x AS base
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_y) AS nilai_accel_y 
+        FROM data_accel_y 
+        GROUP BY lat, lon, id_lokasi
+      ) AS ay ON base.lat = ay.lat AND base.lon = ay.lon AND base.id_lokasi = ay.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_accel_z) AS nilai_accel_z 
+        FROM data_accel_z 
+        GROUP BY lat, lon, id_lokasi
+      ) AS az ON base.lat = az.lat AND base.lon = az.lon AND base.id_lokasi = az.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, nilai_ph 
+        FROM data_ph 
+        WHERE (lat, lon, tanggal) IN (
+          SELECT lat, lon, MAX(tanggal)
+          FROM data_ph
+          GROUP BY lat, lon, id_lokasi
+        )
+      ) AS ph ON base.lat = ph.lat AND base.lon = ph.lon AND base.id_lokasi = ph.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_temperature) AS nilai_temperature 
+        FROM data_temperature 
+        GROUP BY lat, lon, id_lokasi
+      ) AS temp ON base.lat = temp.lat AND base.lon = temp.lon AND base.id_lokasi = temp.id_lokasi  
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_turbidity) AS nilai_turbidity 
+        FROM data_turbidity 
+        GROUP BY lat, lon, id_lokasi
+      ) AS turb ON base.lat = turb.lat AND base.lon = turb.lon AND base.id_lokasi = turb.id_lokasi
+      LEFT JOIN (
+        SELECT lat, lon, id_lokasi, MAX(nilai_speed) AS nilai_speed 
+        FROM data_speed 
+        GROUP BY lat, lon, id_lokasi
+      ) AS speed ON base.lat = speed.lat AND base.lon = speed.lon AND base.id_lokasi = speed.id_lokasi
+      LEFT JOIN data_lokasi AS loc ON base.id_lokasi = loc.id_lokasi
+      GROUP BY base.lat, base.lon, base.tanggal, base.id_lokasi, loc.nama_sungai
+      ORDER BY base.tanggal DESC, base.id_lokasi ASC`
+    );
+
+    // Fetch all locations for summary
+    const [locationRows] = await db.query(
+      `SELECT id_lokasi, nama_sungai, alamat, lat, lon FROM data_lokasi ORDER BY id_lokasi ASC`
+    );
+
+    // Create a new workbook and add a worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Sensor Data');
+
+    // Define columns for sensor data
+    worksheet.columns = [
+      { header: 'Latitude', key: 'lat', width: 15 },
+      { header: 'Longitude', key: 'lon', width: 15 },
+      { header: 'Date', key: 'tanggal', width: 20 },
+      { header: 'Location ID', key: 'id_lokasi', width: 15 },
+      { header: 'Location Name', key: 'nama_sungai', width: 25 },
+      { header: 'Accel X', key: 'nilai_accel_x', width: 15 },
+      { header: 'Accel Y', key: 'nilai_accel_y', width: 15 },
+      { header: 'Accel Z', key: 'nilai_accel_z', width: 15 },
+      { header: 'pH', key: 'nilai_ph', width: 15 },
+      { header: 'Temperature', key: 'nilai_temperature', width: 15 },
+      { header: 'Turbidity', key: 'nilai_turbidity', width: 15 },
+      { header: 'Speed', key: 'nilai_speed', width: 15 },
+    ];
+
+    // Add rows to the worksheet
+    sensorRows.forEach((row) => {
+      worksheet.addRow({
+        lat: row.lat,
+        lon: row.lon,
+        tanggal: new Date(row.tanggal).toLocaleString(), // Ubah format tanggal menjadi waktu yang bisa dibaca manusia
+        id_lokasi: row.id_lokasi,
+        nama_sungai: row.nama_sungai,
+        nilai_accel_x: row.nilai_accel_x,
+        nilai_accel_y: row.nilai_accel_y,
+        nilai_accel_z: row.nilai_accel_z,
+        nilai_ph: row.nilai_ph,
+        nilai_temperature: row.nilai_temperature,
+        nilai_turbidity: row.nilai_turbidity,
+        nilai_speed: row.nilai_speed,
+      });
+    });
+
+    // Apply basic styling to the header
+    worksheet.getRow(1).font = { bold: true };
+
+    // Set border for sensor data
+    const sensorRowCount = sensorRows.length + 1; // +1 for header
+    const sensorRange =
+      worksheet.getCell(`A1`).address +
+      `:${worksheet.getCell(`L${sensorRowCount}`).address}`;
+    worksheet.getCell(sensorRange).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+
+    // Create a summary worksheet for all locations
+    const locationsWorksheet = workbook.addWorksheet('Locations Summary');
+
+    // Define columns for location data
+    locationsWorksheet.columns = [
+      { header: 'Location ID', key: 'id_lokasi', width: 15 },
+      { header: 'Latitude', key: 'lat', width: 15 },
+      { header: 'Longitude', key: 'lon', width: 15 },
+      { header: 'River Name', key: 'nama_sungai', width: 30 },
+      { header: 'Address', key: 'alamat', width: 50 },
+    ];
+
+    // Add the location data rows
+    locationRows.forEach((location) => {
+      locationsWorksheet.addRow({
+        id_lokasi: location.id_lokasi,
+        lat: location.lat,
+        lon: location.lon,
+        nama_sungai: location.nama_sungai,
+        alamat: location.alamat,
+      });
+    });
+
+    // Apply basic styling to the location header
+    locationsWorksheet.getRow(1).font = { bold: true };
+
+    // Set border for location data
+    const locationRowCount = locationRows.length + 1; // +1 for header
+    const locationRange =
+      locationsWorksheet.getCell(`A1`).address +
+      `:${locationsWorksheet.getCell(`E${locationRowCount}`).address}`;
+    locationsWorksheet.getCell(locationRange).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+
+    // Set headers untuk file download
+    const currentDate = new Date().toISOString().split('T')[0];
+    const fileName = `AllSensorData_${currentDate}.xlsx`;
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+
+    // Mengirim file Excel sebagai response stream
+    await workbook.xlsx.write(res);
+
+    // Hentikan response setelah file terkirim
+    res.end();
+  } catch (err) {
+    // Handle error dengan response JSON
+    res.status(500).json({
+      success: false,
+      error_code: 'EXPORT_ALL_ERROR',
+      message: err.message,
+      details: {
         timestamp: new Date().toISOString(),
       },
     });
@@ -410,5 +591,6 @@ module.exports = {
   getCombinedData,
   getCombinedDataById,
   exportDataToExcel,
+  exportAllDataToExcel,
   getCombinedDataWithPagination,
 };
