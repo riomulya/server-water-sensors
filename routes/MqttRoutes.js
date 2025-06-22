@@ -18,10 +18,16 @@ module.exports = (io) => {
     socket.on('updateLocation', (newLocation) => {
       AppState.updateLocation(newLocation); // Gunakan AppState untuk update
       console.log('[DEBUG] Updated location:', AppState.getLocation());
+
+      // Broadcast location update to all other clients
+      socket.broadcast.emit('updateLocation', newLocation);
     });
 
     socket.on('clearLocation', () => {
       AppState.clearLocation(); // Gunakan method clear dari AppState
+
+      // Broadcast location clear to all other clients
+      socket.broadcast.emit('clearLocation', null);
     });
   });
 
