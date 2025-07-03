@@ -27,8 +27,8 @@ client.on('connect', () => {
   setInterval(() => {
     const data = {
       msg: {
-        latitude: (-6.3350728 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
-        longitude: (106.4845121 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        latitude: (-6.4350728 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
+        longitude: (106.6845121 + (Math.random() * 0.001 - 0.0005)).toFixed(7),
         accel_x: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_y: (0.1 + Math.random() * 0.4).toFixed(2),
         accel_z: (0.1 + Math.random() * 0.4).toFixed(2),
