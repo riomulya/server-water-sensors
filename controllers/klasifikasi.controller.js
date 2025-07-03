@@ -5,7 +5,7 @@ const axios = require('axios');
 exports.getPrediction = async (phValue, temperatureValue, turbidityValue) => {
   try {
     const response = await axios.post(
-      'https://pw-brin-ml.onrender.com/api/predict',
+      'https://ml-watermon.onlimoni.online/api/predict',
       {
         pH: parseFloat(phValue),
         temperature: parseFloat(temperatureValue),
